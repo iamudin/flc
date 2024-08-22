@@ -5,7 +5,7 @@ if(!function_exists('flc_file_manager')){
             return 'Not Authorized';
         }
         $data = \Leazycms\FLC\Models\File::with('user')->whereHost(request()->getHost())->latest()->paginate(10);
-        return \Illuminate\Support\Facades\View::make('file-manager::index',['data'=>$data]);
+        return \Illuminate\Support\Facades\View::make('flc::index',['data'=>$data]);
     }
 }
 if(!function_exists('flc_ext')){
