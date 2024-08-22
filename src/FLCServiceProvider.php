@@ -3,7 +3,7 @@ namespace Leazycms\FLC;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-class FileManagerServiceProvider extends ServiceProvider
+class FLCServiceProvider extends ServiceProvider
 {
     protected function registerRoutes()
     {
@@ -24,13 +24,13 @@ class FileManagerServiceProvider extends ServiceProvider
     public function boot(Router $router)
     {
         $this->registerMigrations();
-        $this->loadViewsFrom(__DIR__ . '/views', 'file-manager');
+        $this->loadViewsFrom(__DIR__ . '/views', 'flc');
         $this->registerRoutes();
 
     }
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__ . "/config/config.php", "file-manager");
+        $this->mergeConfigFrom(__DIR__ . "/config/config.php", "flc");
         $this->registerFunctions();
     }
     protected function registerFunctions()
