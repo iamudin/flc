@@ -1,0 +1,31 @@
+{
+    "name": "leazycms/flc",
+    "description": "Extensi LeazyCMS untuk Fileable, Likeable dan Commentable",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["PHP"],
+    "autoload": {
+        "psr-4": {
+            "Leazycms\\FLC\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Nurul Hudin",
+            "email": "m.nurul.hudin@gmail.com"
+        }
+    ],
+    "extra": {
+
+        "laravel": {
+            "providers": [
+                "Leazycms\\FLC\\FLCServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "require": {
+
+    }
+
+}
