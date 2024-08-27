@@ -25,14 +25,16 @@ class FileManagerController extends Controller implements HasMiddleware
              ]);
             if( $file = $request->file('media')){
 
-                (new File)->addFile([
+               if( (new File)->addFile([
                     'file'=>$file,
                     'purpose'=>'Upload Media',
                     'child_id'=>str()->random(6),
                     'mime_type'=> explode(',',allow_mime()),
                     'self_upload'=>true
-                ]);
-                return back()->with('success','File berhasil diupload');
+                ])!==null){
+                    return back()->with('success','File berhasil diupload');
+
+                }
             }
 
     }
@@ -51,7 +53,7 @@ class FileManagerController extends Controller implements HasMiddleware
     {
 
         $media = Cache::remember("media_{$slug}", 60 * 60 * 24, function () use ($slug) {
-            $file = File::select('file_path', 'file_type', 'file_auth','host')
+            $file = File::select('file_path', 'file_type','file_size', 'file_auth','host')
                 ->whereFileName($slug)
                 ->first();
                 if($file){

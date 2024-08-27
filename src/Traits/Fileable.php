@@ -65,8 +65,8 @@ trait Fileable
             return json_decode(json_encode([
                 'file_path' => $file->file_path,
                 'file_type' => $file->file_type,
-                'host' => $file->host,
-                'file_auth' => $file->file_auth
+                'file_host' => $file->host,
+                'file_auth' => $file->file_auth,
             ]));
         });
         return '/media/'.$upload->name;

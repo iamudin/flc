@@ -13,3 +13,13 @@ if(!function_exists('flc_ext')){
         return ['jpg','jpeg','gif','zip','rar','doc','docx','pdf','xls','xlsx','png','webp'];
     }
 }
+
+if(!function_exists('flc_file_size')){
+    function flc_file_size($fileName){
+        $file = \Illuminate\Support\Facades\Cache::get("media_".basename($fileName))?->file_path;
+        if($file){
+            return size_as_kb(\Illuminate\Support\Facades\Storage::size($file));
+        }
+    }
+}
+
