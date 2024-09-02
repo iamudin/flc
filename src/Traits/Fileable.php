@@ -27,6 +27,8 @@ trait Fileable
         $childId = isset($source['child_id']) && (is_string($source['child_id']) || is_numeric($source['child_id'])) && strlen($source['child_id'])>0 ? $source['child_id'] : null;
         $auth = isset($source['auth']) && is_numeric($source['auth']) ? $source['auth'] : null;
         $mime = isset($source['mime_type']) && is_array($source['mime_type']) && $this->is_mime_type($source['mime_type'])? $source['mime_type'] : null;
+        $width = isset($source['width']) && is_numeric($source['width']) ? $source['width'] : null;
+        $height = isset($source['height']) && is_numeric($source['height']) ? $source['height'] : null;
 
         $self_upload = isset($source['self_upload']) ? true : false;
         if($file===null && $purpose===null && $mime===null){
@@ -37,7 +39,7 @@ trait Fileable
             return null;
         }
         $this->removeFileByPurposeAndChild($purpose, $childId);
-        $upload = $this->handleFileUpload($file);
+        $upload = $this->handleFileUpload($file,$width,$height);
         $mimeType = $file->getMimeType();
 
         $data = [
@@ -71,7 +73,7 @@ trait Fileable
         });
         return '/media/'.$upload->name;
     }
-    private function handleFileUpload($file)
+    private function handleFileUpload($file,$width=null,$height=null)
     {
         // Dapatkan tanggal sekarang
         $datePath = Carbon::now()->format('Y/m/d');
@@ -88,7 +90,7 @@ trait Fileable
         if (str_starts_with($file->getMimeType(), 'image/')) {
             // Kompres gambar menggunakan Intervention Image
             $image = Image::make($file);
-            $image->resize(800, null, function ($constraint) {
+            $image->resize($width ?? 1000, $height, function ($constraint) {
                 $constraint->aspectRatio();
                 $constraint->upsize();
             });
