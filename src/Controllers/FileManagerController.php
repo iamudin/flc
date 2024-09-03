@@ -75,7 +75,6 @@ class FileManagerController extends Controller implements HasMiddleware
             abort_if($auth != auth()->id(), 403, 'You do not have permission to access this resource.');
         }
 
-        // Stream file
         return response()->stream(function () use ($media) {
             $stream = Storage::readStream($media->file_path);
             abort_if($stream === false, 404);
@@ -87,5 +86,4 @@ class FileManagerController extends Controller implements HasMiddleware
             'Cache-Control' => 'public, max-age=31536000, immutable'
         ]);
     }
-
 }
