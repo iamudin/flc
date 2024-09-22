@@ -51,7 +51,6 @@ class FileManagerController extends Controller implements HasMiddleware
         }
     public function stream_by_id($slug)
     {
-
         $media = Cache::remember("media_{$slug}", 60 * 60 * 24, function () use ($slug) {
             $file = File::select('file_path', 'file_type','file_size', 'file_auth','host')
                 ->whereFileName($slug)
