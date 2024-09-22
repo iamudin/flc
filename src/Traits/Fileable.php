@@ -79,7 +79,7 @@ trait Fileable
         $datePath = Carbon::now()->format('Y/m/d');
 
         // Tentukan direktori penyimpanan berdasarkan tanggal
-        $directory = "files/{$datePath}";
+        $directory = config('filesystem.disks.local.root')."/files/{$datePath}";
 
         // Buat nama file baru yang di-*slug* dan ditambahkan dengan string acak
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
