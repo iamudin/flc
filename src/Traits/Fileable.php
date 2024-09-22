@@ -97,9 +97,8 @@ trait Fileable
             });
 
             // Simpan gambar yang sudah dikompres ke storage
-            $pathimage = $directory . '/' . $fileName;
-            Storage::put($pathimage, (string) $image->encode());
-            $path = Storage::path($directory . '/' . $fileName);
+            $path = $directory . '/' . $fileName;
+            Storage::put($path, (string) $image->encode());
 
         } else {
             // Simpan file non-gambar langsung ke storage dengan nama yang sudah di-*slug*
