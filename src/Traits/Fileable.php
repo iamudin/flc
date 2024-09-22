@@ -1,6 +1,7 @@
 <?php
 namespace Leazycms\FLC\Traits;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 use Leazycms\FLC\Models\File;
 use Illuminate\Support\Facades\Cache;
 use Intervention\Image\Facades\Image;
@@ -79,7 +80,7 @@ trait Fileable
         $datePath = Carbon::now()->format('Y/m/d');
 
         // Tentukan direktori penyimpanan berdasarkan tanggal
-        $directory = config('filesystem.disks.local.root')."/files/{$datePath}";
+        $directory = Str::after(config('filesystems.disks.local.root'),'app/')."/files/{$datePath}";
 
         // Buat nama file baru yang di-*slug* dan ditambahkan dengan string acak
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -96,8 +97,10 @@ trait Fileable
             });
 
             // Simpan gambar yang sudah dikompres ke storage
-            $path = $directory . '/' . $fileName;
-            Storage::put($path, (string) $image->encode());
+            $pathimage = $directory . '/' . $fileName;
+            Storage::put($pathimage, (string) $image->encode());
+            $path = Storage::path($directory . '/' . $fileName);
+
         } else {
             // Simpan file non-gambar langsung ke storage dengan nama yang sudah di-*slug*
             $path = $file->storeAs($directory, $fileName);
