@@ -65,7 +65,7 @@ class FileManagerController extends Controller implements HasMiddleware
                 }
                 return null;
         });
-        abort_if(empty($media) || (isset($media->file_host) && request()->getHost()!=$media->file_host),404);
+        abort_if(empty($media) ||  (isset($media->file_host) && request()->getHost()!=$media->file_host || !Storage::exists($media->file_path)),404);
         $auth = $media->file_auth;
         if ($auth === null) {
         } elseif ($auth == 0) {
