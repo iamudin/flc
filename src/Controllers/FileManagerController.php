@@ -52,15 +52,17 @@ class FileManagerController extends Controller implements HasMiddleware
     public function stream_by_id($slug)
     {
         $media = Cache::remember("media_{$slug}", 60 * 60 * 24, function () use ($slug) {
-            $file = File::select('file_path', 'file_type','file_size', 'file_auth','host')
+            $file = File::select('file_path', 'file_type','file_size', 'file_hits','file_auth','host')
                 ->whereFileName($slug)
                 ->first();
-                if($file){
+
+                if($file && Storage::exists($file->file_path)){
                     return json_decode(json_encode([
                         'file_path' => $file->file_path,
                         'file_type' => $file->file_type,
                         'file_host' => $file->host,
                         'file_auth' => $file->file_auth,
+                        'file_size' => $file->file_size,
                     ]));
                 }
                 return null;
@@ -73,7 +75,13 @@ class FileManagerController extends Controller implements HasMiddleware
         } elseif ($auth > 0) {
             abort_if($auth != auth()->id(), 403, 'You do not have permission to access this resource.');
         }
-
+        if($id = request('download')){
+            if($id!= md5(request()->session()->getId())){
+                abort('403','Link Expired');
+            }
+            File::whereFilePath($media->file_path)->select('id')->increment('file_hits');
+            return response()->download(Storage::path($media->file_path));
+        }
         return response()->stream(function () use ($media) {
             $stream = Storage::readStream($media->file_path);
             abort_if($stream === false, 404);

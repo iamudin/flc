@@ -70,6 +70,7 @@ trait Fileable
                 'file_type' => $file->file_type,
                 'file_host' => $file->host,
                 'file_auth' => $file->file_auth,
+                'file_size' => $file->file_size,
             ]));
         });
         return '/media/'.$upload->name;
@@ -118,7 +119,7 @@ trait Fileable
         }
         $existingFile = $query->first();
         if ($existingFile) {
-        Cache::forget('media_'.$existingFile->file_name);
+            Cache::forget('media_'.$existingFile->file_name);
             $existingFile->deleteFile(); // Menghapus file dari storage dan record dari database
         }
     }

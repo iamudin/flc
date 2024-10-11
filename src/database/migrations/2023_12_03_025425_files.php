@@ -21,6 +21,7 @@ return new class extends Migration
                 $table->string('child_id')->index()->nullable();
                 $table->string('file_size')->nullable();
                 $table->bigInteger('file_auth')->nullable();
+                $table->bigInteger('file_hits')->default(0);
                 $table->bigInteger('user_id')->index()->nullable();
                 $table->morphs('fileable'); // Akan membuat fileable_id dan fileable_type
                 $table->timestamps();
