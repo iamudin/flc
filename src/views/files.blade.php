@@ -35,7 +35,7 @@
 </table>
 
 </div>
-{{ $data->links('vendor.pagination.bootstrap-5') }}
+{{ $data->links('pagination::bootstrap-5') }}
 
 <script>
     function lw_media_destroy(source){
