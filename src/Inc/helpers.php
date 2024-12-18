@@ -105,3 +105,12 @@ if (!function_exists('flc_file_size')) {
         }
     }
 }
+if (!function_exists('flc_file_to_path')) {
+    function flc_file_to_path($fileName)
+    {
+        $file = \Illuminate\Support\Facades\Cache::get("media_" . basename($fileName))?->file_path;
+        if ($file) {
+            return Storage::path($file);
+        }
+    }
+}
