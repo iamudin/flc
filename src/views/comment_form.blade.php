@@ -218,11 +218,11 @@
                   method: 'POST',
                   data: formData,
                   success: function (response) {
-                    if(response.error.length){
+                    if(response.error=='Captcha'){
                         $('#response-message')
                           .removeClass('success')
                           .addClass('error')
-                          .text('Ups, '+response.error)
+                          .text('Ups, Kode captcha tidak valid.')
                           .fadeIn();
                           $('#comment-form')[0].reset();
                           $('.box-comment').remove()
