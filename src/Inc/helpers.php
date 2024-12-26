@@ -34,7 +34,7 @@ if (!function_exists('flc_comment_form')) {
             );
             if($data->allow_comment=='Y'){
         $data = $data->load('comments');
-        return \Illuminate\Support\Facades\View::make('flc::comment_form', ['comments' => paginate($data->comments->sortByDesc('created_at'),10),'attribute'=>$attribute ?? []]);
+        return \Illuminate\Support\Facades\View::make('flc::comment_form', ['comments' => paginate($data->comments->where('status','publish')->sortByDesc('created_at'),10),'attribute'=>$attribute ?? []]);
     }
 
 }
