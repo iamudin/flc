@@ -16,7 +16,7 @@
                 <td>{{ $item->created_at->format('d-m-y H:i T') }}</td>
                 <td>{{ $item->name}}<br><small class="text-muted"><i class="fa fa-link"></i> {{ $item->link }}</small></td>
                 <td>{!! $item->content !!}
-                    <p><a href="/{{ $item->reference?->url }}">{{ url($item->reference?->url) }}</a></p>
+                    <p><a href="{{ $item->reference}}">{{ url($item->reference) }}</a></p>
                 </td>
                 <td width="140px">
                     <div class="btn-group">
@@ -30,7 +30,9 @@
 </table>
 
 </div>
+@if($data)
 {{ $data->links('vendor.pagination.bootstrap-5') }}
+@endif
 
 <script>
     function lw_media_destroy(source){

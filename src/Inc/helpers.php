@@ -23,6 +23,21 @@ if (!function_exists('flc_comment')) {
         return \Illuminate\Support\Facades\View::make('flc::comments', ['data' => $data]);
     }
 }
+if (!function_exists('flc_comment_form')) {
+    function flc_comment_form($attr=false)
+    {   if($data = config('modules.data')){
+            $attribute = array(
+                'email'=> isset($attr['email']) && $attr['email'] !== true ? false : true,
+                'link'=>isset($attr['link']) && $attr['link'] !== true ? false : true,
+                'content'=>isset($attr['content']) && $attr['content'] !== true ? false : true,
+                'comment_meta'=> isset($attr['comment_meta']) && is_array($attr['comment_meta'])  ? $attr['comment_meta'] : null,
+            );
+        $data = $data->load('comments');
+        return \Illuminate\Support\Facades\View::make('flc::comment_form', ['data' => $data,'attribute'=>$attribute ?? []]);
+}
+
+    }
+}
 if (!function_exists('media_size')) {
     function media_size($media)
     {

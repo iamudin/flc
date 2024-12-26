@@ -15,6 +15,7 @@ class Comment extends Model
         'content',
         'comment_meta',
         'pinned',
+        'reference',
         'status'
     ];
     protected $casts=[
@@ -27,18 +28,9 @@ class Comment extends Model
     public function user(){
         return $this->belongsTo(get_class(Auth::user()));
     }
-    public function reference()
+    public function post()
     {
-        // Pastikan nilai dari commentable_type adalah nama model dengan namespace lengkap
-        $modelClass = $this->commentable_type;
-
-        if (class_exists($modelClass)) {
-            // Menggunakan belongsTo dengan commentable_id sebagai foreign key
-            return $this->belongsTo($modelClass, 'commentable_id', 'id');
-        }
-
-        // Jika model tidak ditemukan, bisa kembalikan null atau lakukan exception handling
-        return null;
+        return $this->belongsTo(query(), 'commentable_id');
     }
     public function child(){
         return $this->hasMany(Comment::class, 'parent_id', 'id');
