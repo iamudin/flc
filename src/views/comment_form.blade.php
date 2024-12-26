@@ -1,7 +1,7 @@
 <style>
 #tiny-comment-form {
     width: auto;
-    margin: 20px;
+    margin: 20px auto;
     font-family: Arial, sans-serif;
     font-size: 14px;
 }
@@ -86,7 +86,7 @@
 /* Daftar Komentar */
 #comment-list {
     width: auto;
-    margin: 20px;
+    margin: 20px auto;
     margin-top: 0;
     font-family: Arial, sans-serif;
     font-size: 14px;
