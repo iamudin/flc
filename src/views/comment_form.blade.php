@@ -83,7 +83,95 @@
     color: red;
     background:#e8bebe
 }
+/* Daftar Komentar */
+#comment-list {
+    width: auto;
+    margin: 20px;
+    margin-top: 0;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
 
+#comment-list h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.custom-comment-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.custom-comment-list li {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.custom-comment-list .comment-author {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.custom-comment-list .comment-text {
+    margin-top: 5px;
+    color: #555;
+}
+
+.custom-comment-list .comment-link {
+    font-size: 12px;
+    color: #0056b3;
+    text-decoration: none;
+}
+
+.custom-comment-list .comment-link:hover {
+    text-decoration: underline;
+}
+.pagination {
+            font-size:small;
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination a {
+            margin: 0 5px;
+            padding: 8px 12px;
+            text-decoration: none;
+            color: #06080a;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .pagination a:hover {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .pagination .disabled {
+            background-color: #b7b7b7;
+            color: rgb(96, 96, 96);
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-left:6px;
+            margin-right:6px;
+            pointer-events: none;
+        }
+
+        .pagination .active {
+            background-color: #b7b7b7;
+            color: rgb(96, 96, 96);
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            pointer-events: none;
+        }
 </style>
 <div id="tiny-comment-form">
     <div id="response-message" style="display: none;padding:20px;text-align:center;margin-bottom:20px"></div>
@@ -149,6 +237,40 @@
       });
   </script>
 </div>
+</div>
+<div id="comment-list">
+    <ul class="custom-comment-list">
+        @foreach($comments as $comment)
+        <li>
+            <div class="comment-author">{{ $comment->name }} @if($comment->user_id)<sup style="color:#fa7a7a">Admin</sup>@endif</div>
+            <div class="comment-text">{{ $comment->content }}</div>
+        </li>
+        @endforeach
+    </ul>
+    <div class="pagination">
+        <!-- Tombol "Previous" -->
+        @if ($comments->onFirstPage())
+            <div class="disabled">Previous</div>
+        @else
+            <a href="{{ $comments->previousPageUrl() }}">Previous</a>
+        @endif
+
+        <!-- Halaman -->
+        @foreach ($comments->getUrlRange(1, $comments->lastPage()) as $page => $url)
+            @if ($page == $comments->currentPage())
+                <div class="active">{{ $page }}</div>
+            @else
+                <a href="{{ $url }}">{{ $page }}</a>
+            @endif
+        @endforeach
+
+        <!-- Tombol "Next" -->
+        @if ($comments->hasMorePages())
+            <a href="{{ $comments->nextPageUrl() }}">Next</a>
+        @else
+            <div class="disabled">Next</div>
+        @endif
+    </div>
 </div>
 
 
