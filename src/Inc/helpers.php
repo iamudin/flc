@@ -32,8 +32,11 @@ if (!function_exists('flc_comment_form')) {
                 'content'=>isset($attr['content']) && $attr['content'] !== true ? false : true,
                 'comment_meta'=> isset($attr['comment_meta']) && is_array($attr['comment_meta'])  ? $attr['comment_meta'] : null,
             );
+            if($data->allow_comment=='Y'){
         $data = $data->load('comments');
         return \Illuminate\Support\Facades\View::make('flc::comment_form', ['comments' => paginate($data->comments->sortByDesc('created_at'),10),'attribute'=>$attribute ?? []]);
+    }
+
 }
 
     }
