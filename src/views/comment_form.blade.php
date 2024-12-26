@@ -194,6 +194,10 @@
 
         <textarea name="content" rows="4" placeholder="Tulis Sesuatu..." ></textarea>
         @endif
+        <div class="captch" style="padding:2px;width:210px;height: 39px;">
+        <img src="{{ route('captcha') }}" width="100" alt="" style="float:left">
+        <input required placeholder="Ketik..." type="text" name="captcha" style="height:33px;width:100px;border:none;border-radius:0;background:#eeeeee;font-size:small">
+        </div>
         <div style="text-align: right">
             <button type="submit" id="submit-button">
                 <span id="button-text">Kirim</span>
@@ -214,6 +218,16 @@
                   method: 'POST',
                   data: formData,
                   success: function (response) {
+                    if(response.error.length){
+                        $('#response-message')
+                          .removeClass('success')
+                          .addClass('error')
+                          .text('Ups, '+response.error)
+                          .fadeIn();
+                          $('#comment-form')[0].reset();
+                          $('.box-comment').remove()
+                    }else{
+
                       $('#response-message')
                           .removeClass('error')
                           .addClass('success')
@@ -221,13 +235,14 @@
                           .fadeIn();
                           $('#comment-form')[0].reset();
                           $('.box-comment').remove()
-                  },
-                  error: function () {
+                        }
+                    },
+                  error: function (response) {
 
                       $('#response-message')
                           .removeClass('success')
                           .addClass('error')
-                          .text('Ups, Gagal Mengirim Silahkan coba beberapa saat lagi.')
+                          .text('Ups, Tidak berhasil, coba beberapa saat lagi.')
                           .fadeIn();
                           $('#comment-form')[0].reset();
                           $('.box-comment').remove()
