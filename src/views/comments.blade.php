@@ -31,7 +31,7 @@
 
 </div>
 @if($data)
-{{ $data->links('vendor.pagination.bootstrap-5') }}
+{{ $data->links('pagination::bootstrap-5') }}
 @endif
 
 <script>

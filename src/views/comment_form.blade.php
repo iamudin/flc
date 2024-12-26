@@ -247,6 +247,7 @@
         </li>
         @endforeach
     </ul>
+@if($data && $comments->hasMorePages())
     <div class="pagination">
         <!-- Tombol "Previous" -->
         @if ($comments->onFirstPage())
@@ -271,6 +272,7 @@
             <div class="disabled">Next</div>
         @endif
     </div>
+    @endif
 </div>
 
 
