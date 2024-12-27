@@ -48,14 +48,14 @@
     border: 3px solid #fff;
     border-radius: 50%;
     border-top-color: transparent;
-    animation: spin 1s linear infinite;
+    animation: spins 1s linear infinite;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
 }
 
-@keyframes spin {
+@keyframes spins {
     from {
         transform: translate(-50%, -50%) rotate(0deg);
     }
