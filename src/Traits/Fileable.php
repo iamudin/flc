@@ -35,7 +35,8 @@ trait Fileable
         if($file===null && $purpose===null && $mime===null){
             return null;
         }
-        if (!in_array($file->getMimeType(),$mime)) {
+        $ext = $file->getClientOriginalExtension();
+        if (!in_array($file->getMimeType(),$mime) && !in_array($ext,flc_ext())) {
             // MIME type tidak diizinkan, jangan lakukan apa-apa dan kembalikan null
             return null;
         }
