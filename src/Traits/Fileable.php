@@ -92,6 +92,7 @@ trait Fileable
         // Cek apakah file adalah gambar
         if (str_starts_with($file->getMimeType(), 'image/')) {
             // Kompres gambar menggunakan Intervention Image
+            try {
             $image = Image::make($file);
             $image->resize($width ?? 1000, $height, function ($constraint) {
                 $constraint->aspectRatio();
@@ -101,6 +102,9 @@ trait Fileable
             // Simpan gambar yang sudah dikompres ke storage
             $path = $directory . '/' . $fileName;
             Storage::put($path, (string) $image->encode());
+        }catch(\Exception $e){
+            return back()->send()->with('success',$e);
+        }
 
         } else {
             // Simpan file non-gambar langsung ke storage dengan nama yang sudah di-*slug*
