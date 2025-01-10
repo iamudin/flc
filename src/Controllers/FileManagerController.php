@@ -40,7 +40,8 @@ class FileManagerController extends Controller implements HasMiddleware
     }
     public function destroy(Request $request){
         abort_if(!$request->user() || !$request->isMethod('post'),404);
-        if($media = $request->media){
+        if($request->media){
+            $media = $request->media;
             $data = File::whereFileName(basename($media))->first();
             if($data){
                 Cache::forget("media_".basename($media));
