@@ -85,7 +85,82 @@ if (!function_exists('media_exists')) {
         return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::exists($media_exists->file_path) ? true : false;
     }
 }
+function media_capture(){
+    $p = collect(Cache::get('url_data',[]))->first();
+    if($p){
+    $post = query()->find($p['post_id']);
+    $postIdToRemove = $post->id;
+    $url = 'https://'.$p['url'];
+    $response = \Illuminate\Support\Facades\Http::get('https://alma.pbedev.my.id/ssweb', [
+        'url' => $url,
+    ]);
+    $data =  $response->json();
+    $tmpFilePath = storage_path('app/'.str($url)->slug().'.jpg');
+    $fileData = base64_decode($data['image_base64']);
+    file_put_contents($tmpFilePath, $fileData);
 
+    // Buat instance UploadedFile
+    $uploadedFile = new \Illuminate\Http\UploadedFile(
+        $tmpFilePath, // Path ke file
+        str($url)->slug().'.jpg', // Nama file
+        'image/jpeg', // MIME type
+        null, // Error (null berarti tidak ada)
+        true // Set sebagai test mode
+    );
+    request()->files->set('file', $uploadedFile);
+    $capture = $post->addFile([
+        'file'=>request()->file('file'),
+        'purpose'=>'capture-web',
+        'mime_type'=> ['image/jpeg']
+    ]);
+    $jsonData = $post->data_field;
+// Tambahkan key baru 'capture'
+    $jsonData['capture'] = $capture;
+
+// Update kolom JSON di database
+    $post->data_field = $jsonData;
+    $post->save();
+    unlink($tmpFilePath);
+
+    $data = Cache::get('url_data', []);
+// Menggunakan Collection untuk menghapus data berdasarkan post_id
+$updatedData = collect($data)->reject(function ($p) use ($postIdToRemove) {
+return $p['post_id'] == $postIdToRemove;
+})->values()->all(); // Menggunakan values() untuk reindex dan all() untuk mengembalikan array
+Cache::forget('url_data');
+Cache::rememberForever('url_data', function()use($updatedData){
+return $updatedData;
+});
+}
+
+}
+if (!function_exists('url_capture')) {
+    function url_capture($post,$url)
+    {
+        $newPost = [
+            'post_id' => $post->id, // post_id yang sama dengan yang ada di dalam array
+            'url' => parse_url($url, PHP_URL_HOST),
+            'created_at' => time(),
+        ];
+        // Mengambil data dari cache
+        $data = Cache::get('url_data', []);
+
+        // Menggunakan Collection untuk memeriksa apakah 'post_id' sudah ada
+            $existingPostIds = collect($data)->pluck('post_id')->toArray();
+
+            if (!in_array($newPost['post_id'], $existingPostIds)) {
+                // Jika post_id belum ada, tambahkan data baru
+                $data[] = $newPost;
+
+                // Menyimpan kembali data yang sudah diperbarui ke cache
+                Cache::forget('url_data');
+                Cache::rememberForever('url_data', function()use($data){
+                    return $data;
+                });
+            }
+
+    }
+}
 if (!function_exists('media_caching')) {
     function media_caching()
     {
