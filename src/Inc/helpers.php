@@ -91,7 +91,7 @@ function media_capture(){
     $post = query()->find($p['post_id']);
     $postIdToRemove = $post->id;
     $url = 'https://'.$p['url'];
-    $response = \Illuminate\Support\Facades\Http::get('https://alma.pbedev.my.id/ssweb', [
+    $response = \Illuminate\Support\Facades\Http::get(config('flc.capture_api'), [
         'url' => $url,
     ]);
     $data =  $response->json();

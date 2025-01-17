@@ -1,3 +1,5 @@
 <?php
 
-return [];
+return [
+    'capture_api'=>env('CAPTURE_API','')
+];
