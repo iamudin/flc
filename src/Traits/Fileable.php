@@ -40,6 +40,8 @@ trait Fileable
             // MIME type tidak diizinkan, jangan lakukan apa-apa dan kembalikan null
             return null;
         }
+        try{
+
         $this->removeFileByPurposeAndChild($purpose, $childId);
         $upload = $this->handleFileUpload($file,$width,$height);
         $mimeType = $file->getMimeType();
@@ -65,7 +67,7 @@ trait Fileable
             $file = $this->files()->create($data);
 
         }
-        Cache::remember("media_{$file->file_name}", 60 * 60 * 24, function () use ($file) {
+        Cache::rememberForever("media_{$file->file_name}", function () use ($file) {
             return json_decode(json_encode([
                 'file_path' => $file->file_path,
                 'file_type' => $file->file_type,
@@ -75,6 +77,11 @@ trait Fileable
             ]));
         });
         return '/media/'.$upload->name;
+    }
+catch(\Exception $e){
+
+
+}
     }
     private function handleFileUpload($file,$width=null,$height=null)
     {
