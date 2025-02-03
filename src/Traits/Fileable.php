@@ -94,8 +94,10 @@ catch(\Exception $e){
         // Buat nama file baru yang di-*slug* dan ditambahkan dengan string acak
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $sluggedName = str($originalName)->slug();
-        $fileName = $sluggedName . '-' . str()->random(6) . '.' . $file->getClientOriginalExtension();
-
+        $fileName = $sluggedName.'.' . $file->getClientOriginalExtension();
+        if(File::whereFileName($sluggedName.'.' . $file->getClientOriginalExtension())->exists()){
+            $fileName = $sluggedName . '-' . str()->random(6) . '.' . $file->getClientOriginalExtension();
+        }
         // Cek apakah file adalah gambar
         if (str_starts_with($file->getMimeType(), 'image/')) {
             // Kompres gambar menggunakan Intervention Image
