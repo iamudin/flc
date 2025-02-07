@@ -42,10 +42,9 @@ trait Fileable
         }
         try{
 
-        $this->removeFileByPurposeAndChild($purpose, $childId);
+        $this->removeFileByPurposeAndChild($purpose, $childId,$self_upload);
         $upload = $this->handleFileUpload($file,$width,$height);
         $mimeType = $file->getMimeType();
-
         $data = [
             'user_id' => auth()?->id(),
             'file_path' => $upload->path,
@@ -65,7 +64,6 @@ trait Fileable
             $file= $this->find($id);
         }else{
             $file = $this->files()->create($data);
-
         }
         Cache::rememberForever("media_{$file->file_name}", function () use ($file) {
             return json_decode(json_encode([
@@ -124,9 +122,14 @@ catch(\Exception $e){
     }
 
 
-    public function removeFileByPurposeAndChild($purpose, $childId = null)
+    public function removeFileByPurposeAndChild($purpose, $childId = null,$self_upload=false)
     {
-        $query = $this->files()->where('purpose', $purpose);
+        if($self_upload){
+            $query = $this->where('purpose', $purpose);
+        }else{
+            $query = $this->files()->where('purpose', $purpose);
+
+        }
 
         if ($childId !== null) {
             $query->where('child_id', $childId);
