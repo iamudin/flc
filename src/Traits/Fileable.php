@@ -83,12 +83,15 @@ catch(\Exception $e){
     }
     private function handleFileUpload($file,$width=null,$height=null)
     {
-        // Dapatkan tanggal sekarang
-        $datePath = Carbon::now()->format('Y/m/d');
+
 
         // Tentukan direktori penyimpanan berdasarkan tanggal
-        $directory = request()->getHttpHost()."/{$datePath}";
-
+        $directory =  Carbon::now()->format('Y/m/d');
+        $storage = Storage::path($directory);
+        if (!file_exists($storage)) {
+            mkdir($storage, 0755, true);
+            chmod($storage, 0755);
+        }
         // Buat nama file baru yang di-*slug* dan ditambahkan dengan string acak
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $sluggedName = str($originalName)->slug();

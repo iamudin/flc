@@ -27,7 +27,7 @@ class FileManagerController extends Controller implements HasMiddleware
 
                if( (new File)->addFile([
                     'file'=>$file,
-                    'purpose'=>'Upload Media',
+                    'purpose'=>'Upload Media',  
                     'child_id'=>str()->random(6),
                     'mime_type'=> explode(',',allow_mime()),
                     'self_upload'=>true
