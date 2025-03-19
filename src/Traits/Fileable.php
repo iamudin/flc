@@ -53,7 +53,7 @@ trait Fileable
             'file_name' => $upload->name,
             'file_size' => Storage::size($upload->path),
             'purpose' => $purpose,
-            'host' => request()->getHttpHost(),
+            'host' => request()->getHost(),
             'child_id' => $childId,
         ];
         if($self_upload){
