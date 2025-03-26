@@ -99,6 +99,10 @@ catch(\Exception $e){
         if(File::whereFileName($sluggedName.'.' . $file->getClientOriginalExtension())->exists()){
             $fileName = $sluggedName . '-' . str()->random(4) . '.' . $file->getClientOriginalExtension();
         }
+        if (!in_array($file->getClientOriginalExtension(),flc_ext())) {
+            // MIME type tidak diizinkan, jangan lakukan apa-apa dan kembalikan null
+            return null;
+        }
         // Cek apakah file adalah gambar
         if (str_starts_with($file->getMimeType(), 'image/')) {
             // Kompres gambar menggunakan Intervention Image
@@ -108,7 +112,6 @@ catch(\Exception $e){
                 $constraint->aspectRatio();
                 $constraint->upsize();
             });
-
             // Simpan gambar yang sudah dikompres ke storage
             $path = $directory . '/' . $fileName;
             Storage::put($path, (string) $image->encode());
