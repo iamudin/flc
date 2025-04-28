@@ -1,7 +1,6 @@
 <?php
 namespace Leazycms\FLC\Traits;
 use Carbon\Carbon;
-use Illuminate\Support\Str;
 use Leazycms\FLC\Models\File;
 use Illuminate\Support\Facades\Cache;
 use Intervention\Image\Facades\Image;
@@ -88,10 +87,10 @@ catch(\Exception $e){
         // Tentukan direktori penyimpanan berdasarkan tanggal
         $directory =  Carbon::now()->format('Y/m/d');
         $storage = Storage::path($directory);
-        if (!file_exists($storage)) {
-            mkdir($storage, 0755, true);
-            chmod($storage, 0755);
-        }
+        // if (!file_exists($storage)) {
+        //     mkdir($storage, 0755, true);
+        //     chmod($storage, 0755);
+        // }
         // Buat nama file baru yang di-*slug* dan ditambahkan dengan string acak
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $sluggedName = str($originalName)->slug();
