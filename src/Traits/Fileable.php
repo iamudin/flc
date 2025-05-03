@@ -84,14 +84,8 @@ catch(\Exception $e){
     {
 
 
-        // Tentukan direktori penyimpanan berdasarkan tanggal
-        $directory =  Carbon::now()->format('Y/m/d');
+        $directory =  (config('flc.disk_directory') ? config('flc.disk_directory').'/' : request()->getHost().'/').Carbon::now()->format('Y/m/d');
         $storage = Storage::path($directory);
-        // if (!file_exists($storage)) {
-        //     mkdir($storage, 0755, true);
-        //     chmod($storage, 0755);
-        // }
-        // Buat nama file baru yang di-*slug* dan ditambahkan dengan string acak
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $sluggedName = str($originalName)->slug();
         $fileName = $sluggedName.'.' . $file->getClientOriginalExtension();
