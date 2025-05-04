@@ -173,6 +173,7 @@ if (!function_exists('media_caching')) {
                         'file_host' => $row->host,
                         'file_auth' => $row->file_auth,
                         'file_size' => $row->file_size,
+                        'file_disk' => $row->disk,
                     ]));
                 });
             }

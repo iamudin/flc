@@ -45,77 +45,32 @@ class FileManagerController extends Controller implements HasMiddleware
             $data = File::whereFileName(basename($media))->first();
             if($data){
                 Cache::forget("media_".basename($media));
-                Storage::delete($data->file_path);
+                Storage::disk($data->disk)->delete($data->file_path);
                 $data->forceDelete();
             }
         }
         }
-    // public function stream_by_id($slug)
-    // {
-    //     $media = Cache::rememberForever("media_{$slug}", function () use ($slug) {
-    //         $file = File::select('file_path', 'file_type','file_size', 'file_hits','file_auth','host')
-    //             ->whereFileName($slug)
-    //             ->first();
-
-    //             if($file && Storage::exists($file->file_path)){
-    //                 return json_decode(json_encode([
-    //                     'file_path' => $file->file_path,
-    //                     'file_type' => $file->file_type,
-    //                     'file_host' => $file->host,
-    //                     'file_auth' => $file->file_auth,
-    //                     'file_size' => $file->file_size,
-    //                 ]));
-    //             }
-    //             return null;
-    //     });
-    //     abort_if(empty($media) ||  (isset($media->file_host) && request()->getHost()!=$media->file_host || !Storage::exists($media->file_path)),404);
-    //     $auth = $media->file_auth;
-    //     if ($auth === null) {
-    //     } elseif ($auth == 0) {
-    //         abort_if(!auth()->check(), 403, 'You need to be logged in to access this resource.');
-    //     } elseif ($auth > 0) {
-    //         abort_if($auth != auth()->id(), 403, 'You do not have permission to access this resource.');
-    //     }
-    //     if($id = request('download')){
-    //         if($id!= md5(request()->session()->getId())){
-    //             abort('403','Link Expired');
-    //         }
-    //         File::whereFilePath($media->file_path)->select('id')->increment('file_hits');
-    //         return response()->download(Storage::path($media->file_path));
-    //     }
-    //     return response()->stream(function () use ($media) {
-    //         $stream = Storage::readStream($media->file_path);
-    //         abort_if($stream === false, 404);
-    //         fpassthru($stream);
-    //         fclose($stream);
-    //     }, 200, [
-    //         'Content-Type' => $media->file_type,
-    //         'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
-    //         'Cache-Control' => 'public, max-age=31536000, immutable'
-    //     ]);
-    // }
-
-
 public function stream_by_id($slug)
 {
     $media = Cache::rememberForever("media_{$slug}", function () use ($slug) {
-        $file = File::select('file_path', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host')
+        $file = File::select('file_path', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host','disk')
             ->whereFileName($slug)
             ->first();
 
-        if ($file && Storage::exists($file->file_path)) {
+        if ($file && Storage::disk($file->disk)->exists($file->file_path)) {
             return json_decode(json_encode([
                 'file_path' => $file->file_path,
                 'file_type' => $file->file_type,
                 'file_host' => $file->host,
                 'file_auth' => $file->file_auth,
                 'file_size' => $file->file_size,
+                'file_disk' => $file->disk,
             ]));
         }
         return null;
     });
 
-    abort_if(empty($media) || (isset($media->file_host) && request()->getHost() != $media->file_host || !Storage::exists($media->file_path)), 404);
+    abort_if(empty($media) || (isset($media->file_host) && request()->getHost() != $media->file_host || !Storage::disk($media->file_disk)->exists($media->file_path)), 404);
 
     $auth = $media->file_auth;
     if ($auth === null) {
@@ -131,7 +86,7 @@ public function stream_by_id($slug)
             abort('403', 'Link Expired');
         }
         File::whereFilePath($media->file_path)->select('id')->increment('file_hits');
-        return response()->download(Storage::get($media->file_path));
+        return response()->download(Storage::disk($media->file_disk)->get($media->file_path));
     }
 
     // Cek apakah user minta size kecil
@@ -139,7 +94,7 @@ public function stream_by_id($slug)
     $isImage = str_contains($media->file_type, 'image');
 
     if ($isImage && $size == 'small') {
-        $fileContent = Storage::get($media->file_path);
+        $fileContent = Storage::disk($media->file_disk)->get($media->file_path);
         $img = Image::make($fileContent)->resize(300, null, function ($constraint) {
             $constraint->aspectRatio();
             $constraint->upsize();
@@ -156,7 +111,7 @@ public function stream_by_id($slug)
     }
 
     return response()->stream(function () use ($media) {
-        $stream = Storage::readStream($media->file_path);
+        $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
         abort_if($stream === false, 404);
         fpassthru($stream);
         fclose($stream);

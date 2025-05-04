@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 class File extends Model
 {
     use Fileable;
-    protected $fillable = ['file_path', 'file_type','file_auth','file_name','file_size','purpose','child_id','user_id','host','file_hits'];
+    protected $fillable = ['file_path', 'file_type','file_auth','file_name','file_size','purpose','child_id','user_id','host','file_hits','disk'];
     protected $casts = ['created_at'=>'datetime'];
 
     public function fileable()
@@ -22,8 +22,8 @@ class File extends Model
     }
     public function deleteFile()
     {
-        if( Storage::exists($this->file_path)){
-        Storage::delete($this->file_path);
+        if( Storage::disk($this->disk)->exists($this->file_path)){
+        Storage::disk($this->disk)->delete($this->file_path);
         }
         Cache::forget('media_'.$this->file_name);
         $this->delete();

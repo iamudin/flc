@@ -29,7 +29,6 @@ trait Fileable
         $mime = isset($source['mime_type']) && is_array($source['mime_type']) && $this->is_mime_type($source['mime_type'])? $source['mime_type'] : null;
         $width = isset($source['width']) && is_numeric($source['width']) ? $source['width'] : null;
         $height = isset($source['height']) && is_numeric($source['height']) ? $source['height'] : null;
-
         $self_upload = isset($source['self_upload']) ? true : false;
         if($file===null && $purpose===null && $mime===null){
             return null;
