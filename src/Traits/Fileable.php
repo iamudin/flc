@@ -51,6 +51,7 @@ trait Fileable
             'file_name' => $upload->name,
             'file_size' => Storage::size($upload->path),
             'purpose' => $purpose,
+            'disk' => config('filesystems.default'),
             'host' => request()->getHost(),
             'child_id' => $childId,
         ];
@@ -70,6 +71,7 @@ trait Fileable
                 'file_host' => $file->host,
                 'file_auth' => $file->file_auth,
                 'file_size' => $file->file_size,
+                'file_disk' => $file->disk,
             ]));
         });
         return '/media/'.$upload->name;
