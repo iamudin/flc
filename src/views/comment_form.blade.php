@@ -210,7 +210,7 @@
 </div>
 @if($allow_comment == 'Y')
 <div id="tiny-comment-form">
-    <div class="form-head-title" style="font-size:15px;padding:15px 0;font-weight:bold;border-top:2px dashed #bbb">&#x1F4DD; Tulis {{ $title }} </div>
+    <div class="form-head-title" style="font-size:15p !important;padding:15px 0 !important;font-weight:bold;border-top:2px dashed #bbb !important">&#x1F4DD; Tulis {{ $title }} </div>
     <div id="response-message" style="display: none;padding:20px;text-align:center;margin-bottom:20px"></div>
     <div class="box-comment">
     <form id="comment-form" method="post">
@@ -233,7 +233,7 @@
         @endif
         <div class="captch" style="padding:2px;width:210px;height: 39px;">
         <img src="{{ route('captcha') }}" width="100" alt="" style="float:left">
-        <input required placeholder="Ketik..." type="text" name="captcha" style="height:33px;width:100px;border:none;border-radius:0;background:#eeeeee;font-size:small">
+        <input required placeholder="Ketik..." type="text" name="captcha" style="height:33px;width:100px;border:none;border-radius:0;background:#eeeeee !important;font-size:small !important">
         </div>
         <div style="text-align: right">
             <button type="submit" id="submit-button">
