@@ -13,7 +13,7 @@
         @endif
     </div>
 
-    <div style="color:#979797 !important;font-size:9px !important;">
+    <div style="color:#979797 !important;font-size:9px !important;line-height: normal !important;">
         Pada {{ $comment->created_at->format('d F Y H:i T') }}
     </div>
 
