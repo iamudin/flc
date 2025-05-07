@@ -22,7 +22,7 @@
     </div>
 
     @if($comment->childs->count())
-        <ul style="list-style:none !important;margin-top:10px 0 0 0 !important;padding:0 !important;">
+        <ul style="list-style:none !important;margin:10px 0 0 0 !important;padding:0 !important;">
             @foreach($comment->childs as $child)
                 @include('flc::comment_list', ['comment' => $child])
             @endforeach
