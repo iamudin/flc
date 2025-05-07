@@ -21,9 +21,9 @@
         {{ $comment->content }}
     </div>
 
-    @if($comment->child->count())
+    @if($comment->childs->count())
         <ul style="list-style:none;margin-top:10px;padding:0;margin-bottom:0">
-            @foreach($comment->child as $child)
+            @foreach($comment->childs as $child)
                 @include('flc::comment_list', ['comment' => $child])
             @endforeach
         </ul>

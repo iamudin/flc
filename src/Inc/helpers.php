@@ -24,7 +24,7 @@ if (!function_exists('flc_comment')) {
     }
 }
 if (!function_exists('flc_comment_form')) {
-    function flc_comment_form($attr=false)
+    function flc_comment_form($title='Komentar', $attr=false)
     {   if($data = config('modules.data')){
             $form_open = $data->allow_comment;
             $attribute = array(
@@ -33,10 +33,15 @@ if (!function_exists('flc_comment_form')) {
                 'content'=>isset($attr['content']) && $attr['content'] !== true ? false : true,
                 'comment_meta'=> isset($attr['comment_meta']) && is_array($attr['comment_meta'])  ? $attr['comment_meta'] : null,
             );
-
-        $data = $data->load('comments.user');
+            $data = $data->load([
+                'comments.user',          // user komentar utama
+                'comments.childs.user', // user anak komentar
+                'comments.childs.childs.user', // jika ingin dukung hingga 3 level
+                'comments.childs.childs.childs.user', // jika ingin dukung hingga 3 level
+                'comments.childs.childs.childs.childs.user', // jika ingin dukung hingga 3 level
+            ]);
         session()->put('captcha',str()->random(6));
-        return \Illuminate\Support\Facades\View::make('flc::comment_form', ['allow_comment'=>$form_open,'comments' => paginate($data->comments->where('status','publish')->sortByDesc('created_at'),10),'attribute'=>$attribute ?? []]);
+        return \Illuminate\Support\Facades\View::make('flc::comment_form', ['title'=>$title,'allow_comment'=>$form_open,'comments' => paginate($data->comments->where('status','publish')->sortByDesc('created_at'),10),'attribute'=>$attribute ?? []]);
 
 }
 

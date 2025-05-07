@@ -32,7 +32,7 @@ class Comment extends Model
     {
         return $this->belongsTo(query(), 'commentable_id');
     }
-    public function child(){
+    public function childs(){
         return $this->hasMany(Comment::class, 'parent_id', 'id');
     }
 
