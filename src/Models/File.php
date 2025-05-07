@@ -1,5 +1,6 @@
 <?php
 namespace Leazycms\FLC\Models;
+use Leazycms\Web\Models\User;
 use Leazycms\FLC\Traits\Fileable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -18,7 +19,7 @@ class File extends Model
     }
 
     public function user(){
-        return $this->belongsTo(get_class(Auth::user()));
+        return $this->belongsTo(User::class);
     }
     public function deleteFile()
     {

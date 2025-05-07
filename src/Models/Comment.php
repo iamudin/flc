@@ -1,8 +1,10 @@
 <?php
 namespace Leazycms\FLC\Models;
+use Leazycms\Web\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
+
 class Comment extends Model
 {
     use SoftDeletes;
@@ -26,7 +28,7 @@ class Comment extends Model
         return $this->morphTo();
     }
     public function user(){
-        return $this->belongsTo(get_class(Auth::user()));
+        return $this->belongsTo(User::class);
     }
     public function post()
     {
