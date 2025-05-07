@@ -26,17 +26,17 @@ if (!function_exists('flc_comment')) {
 if (!function_exists('flc_comment_form')) {
     function flc_comment_form($attr=false)
     {   if($data = config('modules.data')){
+            $form_open = $data->allow_comment;
             $attribute = array(
                 'email'=> isset($attr['email']) && $attr['email'] !== true ? false : true,
                 'link'=>isset($attr['link']) && $attr['link'] !== true ? false : true,
                 'content'=>isset($attr['content']) && $attr['content'] !== true ? false : true,
                 'comment_meta'=> isset($attr['comment_meta']) && is_array($attr['comment_meta'])  ? $attr['comment_meta'] : null,
             );
-            if($data->allow_comment=='Y'){
-        $data = $data->load('comments');
+
+        $data = $data->load('comments.user');
         session()->put('captcha',str()->random(6));
-        return \Illuminate\Support\Facades\View::make('flc::comment_form', ['comments' => paginate($data->comments->where('status','publish')->sortByDesc('created_at'),10),'attribute'=>$attribute ?? []]);
-    }
+        return \Illuminate\Support\Facades\View::make('flc::comment_form', ['allow_comment'=>$form_open,'comments' => paginate($data->comments->where('status','publish')->sortByDesc('created_at'),10),'attribute'=>$attribute ?? []]);
 
 }
 

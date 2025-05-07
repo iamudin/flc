@@ -107,9 +107,9 @@
 .custom-comment-list li {
     margin-bottom: 15px;
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 1px dashed #ccc;
     border-radius: 4px;
-    background-color: #f9f9f9;
+    background-color: #ffffff;
 }
 
 .custom-comment-list .comment-author {
@@ -173,17 +173,54 @@
             pointer-events: none;
         }
 </style>
+<div class="form-head-title" style="font-size:15px;padding:15px 0;font-weight:bold;border-top:2px dashed #bbb">&#x1F5E3; Komentar Publik ({{ $comments->count() }}) </div>
+<div id="comment-list">
+    <ul class="custom-comment-list">
+        @foreach($comments->whereNull('parent_id') as $comment)
+            @include('flc::comment_list', ['comment' => $comment])
+        @endforeach
+    </ul>
+
+@if($comments && $comments->hasMorePages())
+    <div class="pagination">
+        <!-- Tombol "Previous" -->
+        @if ($comments->onFirstPage())
+            <div class="disabled">Previous</div>
+        @else
+            <a href="{{ $comments->previousPageUrl() }}">Previous</a>
+        @endif
+
+        <!-- Halaman -->
+        @foreach ($comments->getUrlRange(1, $comments->lastPage()) as $page => $url)
+            @if ($page == $comments->currentPage())
+                <div class="active">{{ $page }}</div>
+            @else
+                <a href="{{ $url }}">{{ $page }}</a>
+            @endif
+        @endforeach
+
+        <!-- Tombol "Next" -->
+        @if ($comments->hasMorePages())
+            <a href="{{ $comments->nextPageUrl() }}">Next</a>
+        @else
+            <div class="disabled">Next</div>
+        @endif
+    </div>
+    @endif
+</div>
+@if($allow_comment == 'Y')
 <div id="tiny-comment-form">
+    <div class="form-head-title" style="font-size:15px;padding:15px 0;font-weight:bold;border-top:2px dashed #bbb">&#x1F5E3; Kirim tanggapan</div>
     <div id="response-message" style="display: none;padding:20px;text-align:center;margin-bottom:20px"></div>
     <div class="box-comment">
     <form id="comment-form" method="post">
         @csrf
-        <input type="text" name="name" placeholder="Name" required >
+        <input type="text" name="name" placeholder="Nama" required >
         @if(isset($attribute['email']) && $attribute['email']!==false)
-        <input type="email" name="email" placeholder="Email" >
+        <input type="email" name="email" placeholder="Email@mail.com" >
         @endif
         @if(isset($attribute['link'])&& $attribute['link']!==false)
-        <input type="url" name="link" placeholder="Profile Link">
+        <input type="url" name="link" placeholder="Profile Link contoh: http://instagram.com/username">
         @endif
         @if(isset($attribute['comment_meta']) && is_array($attribute['comment_meta']))
         @foreach($attribute['comment_meta'] as $meta)
@@ -192,7 +229,7 @@
         @endif
         @if(isset($attribute['content'])&& $attribute['content']!==false)
 
-        <textarea name="content" rows="4" placeholder="Tulis Sesuatu..." ></textarea>
+        <textarea name="content" rows="4" placeholder="Tulis tanggapanmu disini" ></textarea>
         @endif
         <div class="captch" style="padding:2px;width:210px;height: 39px;">
         <img src="{{ route('captcha') }}" width="100" alt="" style="float:left">
@@ -253,41 +290,9 @@
   </script>
 </div>
 </div>
-<div id="comment-list">
-    <ul class="custom-comment-list">
-        @foreach($comments as $comment)
-        <li>
-            <div class="comment-author">{{ $comment->name }} @if($comment->user_id)<sup style="color:#fa7a7a">Admin</sup>@endif</div>
-            <div class="comment-text">{{ $comment->content }}</div>
-        </li>
-        @endforeach
-    </ul>
-@if($comments && $comments->hasMorePages())
-    <div class="pagination">
-        <!-- Tombol "Previous" -->
-        @if ($comments->onFirstPage())
-            <div class="disabled">Previous</div>
-        @else
-            <a href="{{ $comments->previousPageUrl() }}">Previous</a>
-        @endif
+@else
 
-        <!-- Halaman -->
-        @foreach ($comments->getUrlRange(1, $comments->lastPage()) as $page => $url)
-            @if ($page == $comments->currentPage())
-                <div class="active">{{ $page }}</div>
-            @else
-                <a href="{{ $url }}">{{ $page }}</a>
-            @endif
-        @endforeach
+@endif
 
-        <!-- Tombol "Next" -->
-        @if ($comments->hasMorePages())
-            <a href="{{ $comments->nextPageUrl() }}">Next</a>
-        @else
-            <div class="disabled">Next</div>
-        @endif
-    </div>
-    @endif
-</div>
 
 
