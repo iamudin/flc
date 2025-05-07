@@ -173,7 +173,7 @@
             pointer-events: none;
         }
 </style>
-<div class="form-head-title" style="font-size:15px;padding:15px 0;font-weight:bold;border-top:2px dashed #bbb">&#x1F5E3; {{ $title }} Publik ({{ $comments->count() }}) </div>
+<div class="form-head-title" style="font-size:15px;margin:0;padding:0 0 15px 0;font-weight:bold;">&#x1F5E3; {{ $title }} Publik ({{ $comments->count() }}) </div>
 <div id="comment-list">
     <ul class="custom-comment-list">
         @foreach($comments->whereNull('parent_id') as $comment)
