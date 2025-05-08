@@ -18,6 +18,7 @@ class Comment extends Model
         'comment_meta',
         'pinned',
         'reference',
+        'ip',
         'status'
     ];
     protected $casts=[

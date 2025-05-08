@@ -15,9 +15,9 @@
         </tr>
     </thead>
     <tbody>
-        @foreach ($data as $key=>$item)
+        @foreach ($data as $item)
             <tr>
-                <td align="center">{{ $key+1 }}</td>
+                <td align="center">{{ $loop->iteration + ($data->currentPage() - 1) * $data->perPage() }}</td>
                 <td>{{ $item->created_at->format('d-m-y H:i T') }}</td>
                 <td><b class="text-primary">{{ $item->file_name}}</b><br><small class="text-muted"><i class="fa fa-user"></i> {{ $item->user?->name }}</small></td>
                 <td>{{ size_as_kb($item->file_size)}}</td>

@@ -4,20 +4,26 @@
         <tr>
             <th width="20px">No</th>
             <th>Waktu</th>
-            <th>Pengirim</th>
+            <th style="width:200px">Pengirim</th>
             <th>Isi</th>
+            <th>Status</th>
             <th>Action</th>
         </tr>
     </thead>
     <tbody>
-        @foreach ($data as $key=>$item)
+        @foreach ($data as  $item)
             <tr>
-                <td align="center">{{ $key+1 }}</td>
-                <td>{{ $item->created_at->format('d-m-y H:i T') }}</td>
-                <td>{{ $item->name}}<br><small class="text-muted"><i class="fa fa-link"></i> {{ $item->link }}</small></td>
+                <td align="center">{{ $loop->iteration + ($data->currentPage() - 1) * $data->perPage() }}</td>
+                <td><code>{{ $item->created_at->format('d F Y H:i T') }}</code></td>
+                <td><i class="fa fa-user"></i>  {{ $item->name}}
+                    <br><small class="text-muted"><i class="fa fa-link"></i> {{ $item->link }}
+                    <br><i class="fa fa-at"></i>  {{ $item->email }}
+                    <br><i class="fa fa-globe"></i>  {{ $item->email }}
+                    </small></td>
                 <td>{!! $item->content !!}
                     <p><a href="{{ $item->reference}}">{{ url($item->reference) }}</a></p>
                 </td>
+                <td><span class="badge badge-{{ $item->status=='publish' ? 'success' : 'warning' }}">{{str( $item->status)->upper() }}</span></td>
                 <td width="140px">
                     <div class="btn-group">
                     <buttton class="btn btn-warning btn-sm "> <i class="fa fa-reply"></i> Reply</buttton>
