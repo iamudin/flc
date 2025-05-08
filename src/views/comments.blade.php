@@ -18,7 +18,7 @@
                 <td><i class="fa fa-user"></i>  {{ $item->name}}
                     <br><small class="text-muted"><i class="fa fa-link"></i> {{ $item->link }}
                     <br><i class="fa fa-at"></i>  {{ $item->email }}
-                    <br><i class="fa fa-globe"></i>  {{ $item->email }}
+                    <br><i class="fa fa-globe"></i>  {{ $item->ip }}
                     </small></td>
                 <td>{!! $item->content !!}
                     <p><a href="{{ $item->reference}}">{{ url($item->reference) }}</a></p>
