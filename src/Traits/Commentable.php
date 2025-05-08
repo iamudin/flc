@@ -15,6 +15,7 @@ trait Commentable
         $data['content'] = $source['content'] ?? null;
         $data['name'] = $source['name'] ?? null;
         $data['email'] = $source['email'] ?? null;
+        $data['ip'] = $source['ip'] ?? null;
         $data['link'] = $source['link'] ?? null;
         $data['reference'] = request()->fullUrl();
         $data['comment_meta'] = $source['comment_meta'] ?? null;
