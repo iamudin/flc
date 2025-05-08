@@ -16,12 +16,12 @@
                 <td align="center">{{ $loop->iteration + ($data->currentPage() - 1) * $data->perPage() }}</td>
                 <td><code>{{ $item->created_at->format('d F Y H:i T') }}</code></td>
                 <td><i class="fa fa-user"></i>  {{ $item->name}}
-                    <br><small class="text-muted"><i class="fa fa-link"></i> {{ $item->link }}
-                    <br><i class="fa fa-at"></i>  {{ $item->email }}
-                    <br><i class="fa fa-globe"></i>  {{ $item->ip }}
+                    <br><small class="text-muted"><i class="fa fa-link"></i> {{ $item->link ?? '-' }}
+                    <br><i class="fa fa-at"></i>  {{ $item->email ?? '-' }}
+                    <br><i class="fa fa-globe"></i>  {{ $item->ip ?? '-' }}
                     </small></td>
                 <td>{!! $item->content !!}
-                    <p><a href="{{ $item->reference}}">{{ url($item->reference) }}</a></p>
+                    <p><small><a href="{{ $item->reference}}">{{ url($item->reference) }}</a></small></p>
                 </td>
                 <td><span class="badge badge-{{ $item->status=='publish' ? 'success' : 'warning' }}">{{str( $item->status)->upper() }}</span></td>
                 <td width="140px">
