@@ -106,10 +106,12 @@ public function stream_by_id($slug)
         return response($img, 200, [
             'Content-Type' => $media->file_type,
             'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
-            'Cache-Control' => 'public, max-age=31536000, immutable'
+            'Cache-Control' => 'public, max-age=31536000, immutable',
+            'Pragma' => 'public',
+            'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
+            'Accept-Ranges' => 'bytes'
         ]);
     }
-
     return response()->stream(function () use ($media) {
         $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
         abort_if($stream === false, 404);
@@ -118,8 +120,12 @@ public function stream_by_id($slug)
     }, 200, [
         'Content-Type' => $media->file_type,
         'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
-        'Cache-Control' => 'public, max-age=31536000, immutable'
+        'Cache-Control' => 'public, max-age=31536000, immutable',
+        'Pragma' => 'public',
+        'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
+        'Accept-Ranges' => 'bytes',
     ]);
+
 }
 
 }
