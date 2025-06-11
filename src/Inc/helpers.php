@@ -9,7 +9,7 @@ if (!function_exists('flc_file_manager')) {
         if (!auth()->check()) {
             return 'Not Authorized';
         }
-        $data = \Leazycms\FLC\Models\File::with('user')->whereHost(request()->getHost())->latest()->paginate(10);
+        $data = \Leazycms\FLC\Models\File::with('user')->latest()->paginate(10);
         return \Illuminate\Support\Facades\View::make('flc::files', ['data' => $data]);
     }
 }
