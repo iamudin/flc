@@ -192,7 +192,7 @@ if (!function_exists('media_caching')) {
 if (!function_exists('flc_ext')) {
     function flc_ext()
     {
-        return ['jpg', 'jpeg', 'gif', 'zip', 'rar', 'doc', 'docx', 'pdf', 'xls', 'xlsx', 'png', 'webp', 'mp4'];
+        return ['jpg', 'jpeg', 'gif', 'zip', 'rar', 'doc', 'docx', 'pdf', 'xls', 'xlsx', 'png', 'webp', 'mp4','JPG', 'JPEG', 'GIF', 'ZIP', 'RAR', 'DOC', 'DOCX', 'PDF', 'XLS', 'XLSX', 'PNG', 'WEBP', 'MP4'];
     }
 }
 
