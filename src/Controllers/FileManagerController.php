@@ -57,7 +57,7 @@ public function stream_by_id($slug)
             ->whereFileName($slug)
             ->first();
 
-        if ($file && Storage::disk($file->disk)->exists($file->file_path)) {
+        if ($file && Storage::disk($file->disk)->exists(str($file->file_path)->lower())) {
             return json_decode(json_encode([
                 'file_path' => $file->file_path,
                 'file_type' => $file->file_type,
@@ -70,7 +70,7 @@ public function stream_by_id($slug)
         return null;
     });
 
-    abort_if(empty($media) || (isset($media->file_host) && request()->getHost() != $media->file_host || !Storage::disk($media->file_disk)->exists($media->file_path)), 404);
+    abort_if(empty($media) || (isset($media->file_host) && request()->getHost() != $media->file_host || !Storage::disk($media->file_disk)->exists(str($media->file_path)->lower())), 404);
 
     $auth = $media->file_auth;
     if ($auth === null) {
@@ -86,7 +86,7 @@ public function stream_by_id($slug)
             abort('403', 'Link Expired');
         }
         File::whereFilePath($media->file_path)->select('id')->increment('file_hits');
-        return response()->download(Storage::disk($media->file_disk)->get($media->file_path));
+        return response()->download(Storage::disk($media->file_disk)->get(str($media->file_path)->lower()));
     }
 
     // Cek apakah user minta size kecil
@@ -94,18 +94,18 @@ public function stream_by_id($slug)
     $isImage = str_contains($media->file_type, 'image');
 
     if ($isImage && $size == 'small') {
-        $fileContent = Storage::disk($media->file_disk)->get($media->file_path);
+        $fileContent = Storage::disk($media->file_disk)->get(str($media->file_path)->lower());
         $img = Image::make($fileContent)->resize(300, null, function ($constraint) {
             $constraint->aspectRatio();
             $constraint->upsize();
         });
 
         // Encode file ke format aslinya
-        $img->encode(pathinfo($media->file_path, PATHINFO_EXTENSION), 90); // 90 = kualitas gambar
+        $img->encode(pathinfo(str($media->file_path)->lower(), PATHINFO_EXTENSION), 90); // 90 = kualitas gambar
 
         return response($img, 200, [
             'Content-Type' => $media->file_type,
-            'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
+            'Content-Disposition' => 'inline; filename="' . basename(str($media->file_path)->lower()) . '"',
             'Cache-Control' => 'public, max-age=31536000, immutable',
             'Pragma' => 'public',
             'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
@@ -113,13 +113,13 @@ public function stream_by_id($slug)
         ]);
     }
     return response()->stream(function () use ($media) {
-        $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
+        $stream = Storage::disk($media->file_disk)->readStream(str($media->file_path)->lower());
         abort_if($stream === false, 404);
         fpassthru($stream);
         fclose($stream);
     }, 200, [
         'Content-Type' => $media->file_type,
-        'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
+        'Content-Disposition' => 'inline; filename="' . basename(str($media->file_path)->lower()) . '"',
         'Cache-Control' => 'public, max-age=31536000, immutable',
         'Pragma' => 'public',
         'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
