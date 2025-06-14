@@ -86,14 +86,14 @@ catch(\Exception $e){
 
 
         $directory =  (config('flc.disk_directory') ? config('flc.disk_directory').'/' : request()->getHost().'/').Carbon::now()->format('Y/m/d');
-        $storage = Storage::path($directory);
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $sluggedName = str($originalName)->slug();
+        $extension = str($file->getClientOriginalExtension())->lower();
         $fileName = $sluggedName.'.' . $file->getClientOriginalExtension();
         if(File::whereFileName($sluggedName.'.' . $file->getClientOriginalExtension())->exists()){
-            $fileName = $sluggedName . '-' . str()->random(4) . '.' . $file->getClientOriginalExtension();
+            $fileName = $sluggedName . '-' . str()->random(4) . '.' . $extension;
         }
-        if (!in_array($file->getClientOriginalExtension(),flc_ext())) {
+        if (!in_array($extension,flc_ext())) {
             // MIME type tidak diizinkan, jangan lakukan apa-apa dan kembalikan null
             return null;
         }
