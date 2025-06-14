@@ -90,8 +90,8 @@ catch(\Exception $e){
         $sluggedName = str($originalName)->slug();
         $extension = str($file->getClientOriginalExtension())->lower();
         $fileName = $sluggedName.'.' . $file->getClientOriginalExtension();
-        if(File::whereFileName($sluggedName.'.' . $file->getClientOriginalExtension())->exists()){
-            $fileName = $sluggedName . '-' . str()->random(4) . '.' . $extension;
+        if(File::whereFileName($sluggedName.'.' . $extension)->exists()){
+            $fileName = $sluggedName . '-' . str(str()->random(4))->lower() . '.' . $extension;
         }
         if (!in_array($extension,flc_ext())) {
             // MIME type tidak diizinkan, jangan lakukan apa-apa dan kembalikan null
