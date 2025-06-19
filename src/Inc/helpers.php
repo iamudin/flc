@@ -51,7 +51,7 @@ if (!function_exists('media_size')) {
     function media_size($media)
     {
         $media_exists =  \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::exists($media_exists->file_path) ? size_as_kb($media_exists->file_size)  : null;
+        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? size_as_kb($media_exists->file_size)  : null;
     }
 }
 if (!function_exists('size_as_kb')) {
@@ -68,11 +68,19 @@ if (!function_exists('size_as_kb')) {
         return round($bytes, $precision) . ' ' . $units[$pow];
     }
 }
+
+if (!function_exists('allow_mime')) {
+
+    function allow_mime()
+    {
+        return 'application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream,video/mp4,image/gif';
+    }
+}
 if (!function_exists('media_download')) {
     function media_download($media)
     {
         $media_exists =  \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::exists($media_exists->file_path) ? url($media . '?download=' . md5(request()->session()->getId())) : false;
+        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? url($media . '?download=' . md5(request()->session()->getId())) : false;
     }
 }
 
@@ -87,7 +95,7 @@ if (!function_exists('media_exists')) {
     function media_exists($media)
     {
         $media_exists =  \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::exists($media_exists->file_path) ? true : false;
+        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? true : false;
     }
 }
 function media_capture(){
@@ -170,7 +178,7 @@ if (!function_exists('media_caching')) {
     function media_caching()
     {
         foreach (\Leazycms\FLC\Models\File::select('file_path', 'file_name', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host')->get() as $row) {
-            if (Storage::exists($row->file_path)) {
+            if (Storage::disk($row->file_disk)->exists($row->file_path)) {
                 Cache::rememberForever("media_{$row->file_name}",function () use ($row) {
                     return json_decode(json_encode([
                         'file_path' => $row->file_path,

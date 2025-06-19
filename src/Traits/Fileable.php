@@ -22,7 +22,7 @@ trait Fileable
         if(!is_array($source)){
             return null;
         }
-        $file = isset($source['file']) &&  is_file($source['file']) ? $source['file'] : null;
+        $file = isset($source['file']) && is_file($source['file']) ? $source['file'] : null;
         $purpose = isset($source['purpose']) && is_string($source['purpose']) && strlen($source['purpose']) > 0 ? str($source['purpose'])->slug() : null;
         $childId = isset($source['child_id']) && (is_string($source['child_id']) || is_numeric($source['child_id'])) && strlen($source['child_id'])>0 ? $source['child_id'] : null;
         $auth = isset($source['auth']) && is_numeric($source['auth']) ? $source['auth'] : null;
@@ -98,27 +98,30 @@ catch(\Exception $e){
             return null;
         }
         // Cek apakah file adalah gambar
-        if (str_starts_with($file->getMimeType(), 'image/')) {
+        try {
+
+        if (str_starts_with($file->getMimeType(), 'image/') && strpos($file->getMimeType(), 'gif') === false) {
             // Kompres gambar menggunakan Intervention Image
-            try {
             $image = Image::make($file);
             $image->resize($width ?? 1000, $height, function ($constraint) {
                 $constraint->aspectRatio();
                 $constraint->upsize();
             });
-            // Simpan gambar yang sudah dikompres ke storage
-            $path = $directory . '/' . $fileName;
-            Storage::put($path, (string) $image->encode());
-        }catch(\Exception $e){
-            return back()->send()->with('success',$e);
-        }
-
-        } else {
+                // Ubah extension dan MIME type menjadi WebP jika bukan WebP
+                $fileNameWithoutExt = pathinfo($fileName, PATHINFO_FILENAME);
+                $finalFileName = $fileNameWithoutExt . '.webp';
+                $path = $directory . '/' . $finalFileName;
+                // Simpan gambar dalam format WebP
+                $imageData = (string) $image->encode('webp', 80); // kualitas 80
+                Storage::put($path, $imageData);
+            } else {
             // Simpan file non-gambar langsung ke storage dengan nama yang sudah di-*slug*
             $path = $file->storeAs($directory, $fileName);
         }
-
-        return json_decode(json_encode(['path'=>$path,'name'=>$fileName]));
+        } catch (\Exception $e) {
+            return back()->send()->with('success',$e);
+        }
+        return json_decode(json_encode(['path'=>$path,'name'=>$finalFileName]));
     }
 
 

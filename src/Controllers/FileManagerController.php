@@ -23,6 +23,7 @@ class FileManagerController extends Controller implements HasMiddleware
             $request->validate([
                 'media' =>'required|mimetypes:'.allow_mime(),
              ]);
+
             if( $file = $request->file('media')){
 
                if( (new File)->addFile([
