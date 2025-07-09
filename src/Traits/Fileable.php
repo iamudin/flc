@@ -39,7 +39,6 @@ trait Fileable
             return null;
         }
         try{
-
         $this->removeFileByPurposeAndChild($purpose, $childId,$self_upload);
         $upload = $this->handleFileUpload($file,$width,$height);
         $mimeType = $file->getMimeType();
@@ -94,14 +93,15 @@ catch(\Exception $e){
             $fileName = $sluggedName . '-' . str(str()->random(4))->lower() . '.' . $extension;
         }
         if (!in_array($extension,flc_ext())) {
+
             // MIME type tidak diizinkan, jangan lakukan apa-apa dan kembalikan null
             return null;
         }
         // Cek apakah file adalah gambar
         try {
+            if (str_starts_with($file->getMimeType(), 'image/') && strpos($file->getMimeType(), 'gif') === false) {
 
-        if (str_starts_with($file->getMimeType(), 'image/') && strpos($file->getMimeType(), 'gif') === false) {
-            // Kompres gambar menggunakan Intervention Image
+                // Kompres gambar menggunakan Intervention Image
             $image = Image::make($file);
             $image->resize($width ?? 1000, $height, function ($constraint) {
                 $constraint->aspectRatio();
@@ -115,8 +115,8 @@ catch(\Exception $e){
                 $imageData = (string) $image->encode('webp', 80); // kualitas 80
                 Storage::put($path, $imageData);
             } else {
-            // Simpan file non-gambar langsung ke storage dengan nama yang sudah di-*slug*
-            $path = $file->storeAs($directory, $fileName);
+                $path = $file->storeAs($directory, $fileName);
+                $finalFileName = $fileName;
         }
         } catch (\Exception $e) {
             return back()->send()->with('success',$e);
