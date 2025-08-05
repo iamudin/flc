@@ -30,7 +30,7 @@ if (!function_exists('flc_comment_form')) {
             $attribute = array(
                 'email'=> isset($attr['email']) && $attr['email'] !== true ? false : true,
                 'link'=>isset($attr['link']) && $attr['link'] !== true ? false : true,
-                'content'=>isset($attr['content']) && $attr['content'] !== true ? false : true,
+                'comment_content'=>isset($attr['comment_content']) && $attr['comment_content'] !== true ? false : true,
                 'comment_meta'=> isset($attr['comment_meta']) && is_array($attr['comment_meta'])  ? $attr['comment_meta'] : null,
             );
             $data = $data->load([

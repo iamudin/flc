@@ -209,87 +209,87 @@
     @endif
 </div>
 @if($allow_comment == 'Y')
-<div id="tiny-comment-form">
-    <div class="form-head-title" style="font-size:15p !important;padding:15px 0 !important;font-weight:bold;border-top:2px dashed #bbb !important">&#x1F4DD; Tulis {{ $title }} </div>
-    <div id="response-message" style="display: none;padding:20px;text-align:center;margin-bottom:20px"></div>
-    <div class="box-comment">
-    <form id="comment-form" method="post">
-        @csrf
-        <input type="text" name="name" placeholder="Nama Pengirim (wajib isi)" required >
-        @if(isset($attribute['email']) && $attribute['email']!==false)
-        <input type="email" name="email" placeholder="Alamat email ex: email@mail.com (opsional)" >
-        @endif
-        @if(isset($attribute['link'])&& $attribute['link']!==false)
-        <input type="url" name="link" placeholder="Link profile ex: http://instagram.com/username (opsional)">
-        @endif
-        @if(isset($attribute['comment_meta']) && is_array($attribute['comment_meta']))
-        @foreach($attribute['comment_meta'] as $meta)
-        <input type="text" name="comment_meta[{{$meta}}]" placeholder="{{str($meta)->headline()}}">
-        @endforeach
-        @endif
-        @if(isset($attribute['content'])&& $attribute['content']!==false)
+    <div id="tiny-comment-form">
+        <div class="form-head-title" style="font-size:15p !important;padding:15px 0 !important;font-weight:bold;border-top:2px dashed #bbb !important">&#x1F4DD; Tulis {{ $title }} </div>
+        <div id="response-message" style="display: none;padding:20px;text-align:center;margin-bottom:20px"></div>
+        <div class="box-comment">
+        <form id="comment-form" method="post">
+            @csrf
+            <input type="text" name="name" placeholder="Nama Pengirim (wajib isi)" required >
+            @if(isset($attribute['email']) && $attribute['email'] !== false)
+            <input type="email" name="email" placeholder="Alamat email ex: email@mail.com (opsional)" >
+            @endif
+            @if(isset($attribute['link']) && $attribute['link'] !== false)
+            <input type="url" name="link" placeholder="Link profile ex: http://instagram.com/username (opsional)">
+            @endif
+            @if(isset($attribute['comment_meta']) && is_array($attribute['comment_meta']))
+            @foreach($attribute['comment_meta'] as $meta)
+            <input type="text" name="comment_meta[{{$meta}}]" placeholder="{{str($meta)->headline()}}">
+            @endforeach
+            @endif
+            @if(isset($attribute['comment_content']) && $attribute['comment_content'] !== false)
 
-        <textarea maxlength="500" name="content" rows="4" placeholder="Tulis {{ $title }}  disini maksimal 500 Karakter (wajib isi)" required></textarea>
-        @endif
-        <div class="captch" style="padding:2px;width:210px;height: 39px;">
-        <img src="{{ route('captcha') }}" width="100" alt="" style="float:left">
-        <input required placeholder="Ketik..." type="text" name="captcha" style="height:33px;width:100px;border:none;border-radius:0;background:#eeeeee !important;font-size:small !important">
-        </div>
-        <div style="text-align: right">
-            <button type="submit" id="submit-button">
-                <span id="button-text">Kirim</span>
-                <span id="loading-spinner" style="display: none;"></span>
-            </button>
-        </div>
-    </form>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-          $('#comment-form').on('submit', function (e) {
-              e.preventDefault();
-              var formData = $(this).serialize();
-              var $button = $('#submit-button');
-            $button.addClass('loading');
-            $('#loading-spinner').show();
-              $.ajax({
-                  url: '{{request()->fullUrl()}}',
-                  method: 'POST',
-                  data: formData,
-                  success: function (response) {
-                    if(response.error=='Captcha'){
-                        $('#response-message')
-                          .removeClass('success')
-                          .addClass('error')
-                          .text('Ups, Kode captcha tidak valid.')
-                          .fadeIn();
-                          $('#comment-form')[0].reset();
-                          $('.box-comment').remove()
-                    }else{
+                <textarea maxlength="500" name="comment_content" rows="4" placeholder="Tulis {{ $title }}  disini maksimal 500 Karakter (wajib isi)" required></textarea>
+            @endif
+            <div class="captch" style="padding:2px;width:210px;height: 39px;">
+            <img src="{{ route('captcha') }}" width="100" alt="" style="float:left">
+            <input required placeholder="Ketik..." type="text" name="captcha" style="height:33px;width:100px;border:none;border-radius:0;background:#eeeeee !important;font-size:small !important">
+            </div>
+            <div style="text-align: right">
+                <button type="submit" id="submit-button">
+                    <span id="button-text">Kirim</span>
+                    <span id="loading-spinner" style="display: none;"></span>
+                </button>
+            </div>
+        </form>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+              $('#comment-form').on('submit', function (e) {
+                  e.preventDefault();
+                  var formData = $(this).serialize();
+                  var $button = $('#submit-button');
+                $button.addClass('loading');
+                $('#loading-spinner').show();
+                  $.ajax({
+                      url: '{{request()->fullUrl()}}',
+                      method: 'POST',
+                      data: formData,
+                      success: function (response) {
+                        if(response.error=='Captcha'){
+                            $('#response-message')
+                              .removeClass('success')
+                              .addClass('error')
+                              .text('Ups, Kode captcha tidak valid.')
+                              .fadeIn();
+                              $('#comment-form')[0].reset();
+                              $('.box-comment').remove()
+                        }else{
 
-                      $('#response-message')
-                          .removeClass('error')
-                          .addClass('success')
-                          .text('Terima Kasih atas partisipasi anda')
-                          .fadeIn();
-                          $('#comment-form')[0].reset();
-                          $('.box-comment').remove()
-                        }
-                    },
-                  error: function (response) {
+                          $('#response-message')
+                              .removeClass('error')
+                              .addClass('success')
+                              .text('Terima Kasih atas partisipasi anda')
+                              .fadeIn();
+                              $('#comment-form')[0].reset();
+                              $('.box-comment').remove()
+                            }
+                        },
+                      error: function (response) {
 
-                      $('#response-message')
-                          .removeClass('success')
-                          .addClass('error')
-                          .text('Ups, Tidak berhasil, coba beberapa saat lagi.')
-                          .fadeIn();
-                          $('#comment-form')[0].reset();
-                          $('.box-comment').remove()
-                  }
+                          $('#response-message')
+                              .removeClass('success')
+                              .addClass('error')
+                              .text('Ups, Tidak berhasil, coba beberapa saat lagi.')
+                              .fadeIn();
+                              $('#comment-form')[0].reset();
+                              $('.box-comment').remove()
+                      }
+                  });
               });
           });
-      });
-  </script>
-</div>
-</div>
+      </script>
+    </div>
+    </div>
 @else
 
 @endif
