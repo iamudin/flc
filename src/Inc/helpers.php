@@ -54,6 +54,26 @@ if (!function_exists('media_size')) {
         return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? size_as_kb($media_exists->file_size)  : null;
     }
 }
+if (!function_exists('get_ext')) {
+    function get_ext($file)
+    {
+        if (!empty($file)) :
+            $file_name = $file;
+            $temp = explode('.', $file_name);
+            $extension = end($temp);
+            return $extension;
+        else :
+            return false;
+        endif;
+    }
+}
+if (!function_exists('media_extension')) {
+    function media_extension($media)
+    {
+        $media_exists =  \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
+        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? get_ext($media_exists->file_name)  : null;
+    }
+}
 if (!function_exists('size_as_kb')) {
     function size_as_kb($bytes, $precision = 2)
     {
