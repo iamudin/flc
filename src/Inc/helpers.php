@@ -51,7 +51,7 @@ if (!function_exists('media_size')) {
     function media_size($media)
     {
         $media_exists =  \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? size_as_kb($media_exists->file_size)  : null;
+        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? size_as_kb($media_exists->file_size)  : 'N/A';
     }
 }
 if (!function_exists('get_ext')) {
@@ -71,7 +71,7 @@ if (!function_exists('media_extension')) {
     function media_extension($media)
     {
         $media_exists =  \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? get_ext($media_exists->file_name)  : null;
+        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? str(get_ext($media))->upper()  : 'N/A';
     }
 }
 if (!function_exists('size_as_kb')) {
@@ -93,7 +93,7 @@ if (!function_exists('allow_mime')) {
 
     function allow_mime()
     {
-        return 'application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream,video/mp4,image/gif';
+        return 'application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream,video/mp4,image/gif,image/webp';
     }
 }
 if (!function_exists('media_download')) {
@@ -105,7 +105,7 @@ if (!function_exists('media_download')) {
 }
 
 if (!function_exists('media_hits')) {
-    function media_hits(array $id)
+    function media_hits($id)
     {
         return \Leazycms\FLC\Models\File::whereIn('fileable_id', $id)->pluck('file_hits', 'file_name')->toArray();
     }
