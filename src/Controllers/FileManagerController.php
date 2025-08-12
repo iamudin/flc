@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
-
+use Illuminate\Support\Str;
 class FileManagerController extends Controller implements HasMiddleware
 {
     public static function middleware(): array {
@@ -71,7 +71,25 @@ public function stream_by_id($slug)
         return null;
     });
 
-    abort_if(empty($media) || (isset($media->file_host) && request()->getHost() != $media->file_host || !Storage::disk($media->file_disk)->exists($media->file_path)), 404);
+    if(empty($media) || (isset($media->file_host) && request()->getHost() != $media->file_host || !Storage::disk($media->file_disk)->exists($media->file_path))) {
+                $requestId = Str::uuid(); // unik, seperti AWS RequestId
+                $hostId = base64_encode(Str::random(32)); // mirip HostId AWS
+
+                $xml = <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>NoSuchKey</Code>
+  <Message>The specified key does not exist.</Message>
+  <Key>{$slug}</Key>
+  <RequestId>{$requestId}</RequestId>
+  <HostId>{$hostId}</HostId>
+</Error>
+XML;
+
+                return response($xml, 404)
+                    ->header('Content-Type', 'application/xml');
+            }
+
 
     $auth = $media->file_auth;
     if ($auth === null) {
