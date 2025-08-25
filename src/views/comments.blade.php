@@ -20,7 +20,7 @@
                     <br><i class="fa fa-at"></i>  {{ $item->email ?? '-' }}
                     <br><i class="fa fa-globe"></i>  {{ $item->ip ?? '-' }}
                     </small></td>
-                <td>{!! $item->comment_content !!}
+                <td>{!! $item->content !!}
                     <p><small><a href="{{ $item->reference}}">{{ url($item->reference) }}</a></small></p>
                 </td>
                 <td><span class="badge badge-{{ $item->status=='publish' ? 'success' : 'warning' }}">{{str( $item->status)->upper() }}</span></td>

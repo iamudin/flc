@@ -18,7 +18,7 @@
     </div>
 
     <div class="comment-text" style="padding-bottom: 3px">
-        {{ $comment->comment_content }}
+        {{ $comment->content }}
     </div>
 
     @if($comment->childs->count())
