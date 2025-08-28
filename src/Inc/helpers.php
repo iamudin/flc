@@ -2,6 +2,57 @@
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+if (!function_exists('getMimeTypeByExtension')) {
+function getMimeTypeByExtension($filename) {
+     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+    $mimeTypes = [
+        // Dokumen
+        'txt'  => 'text/plain',
+        'htm'  => 'text/html',
+        'html' => 'text/html',
+        'css'  => 'text/css',
+        'csv'  => 'text/csv',
+        'xml'  => 'application/xml',
+        'json' => 'application/json',
+        'pdf'  => 'application/pdf',
+
+        // Microsoft Office lama
+        'doc'  => 'application/msword',
+        'xls'  => 'application/vnd.ms-excel',
+        'ppt'  => 'application/vnd.ms-powerpoint',
+
+        // Microsoft Office baru (OOXML)
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+
+        // OpenDocument
+        'odt'  => 'application/vnd.oasis.opendocument.text',
+        'ods'  => 'application/vnd.oasis.opendocument.spreadsheet',
+        'odp'  => 'application/vnd.oasis.opendocument.presentation',
+
+        // Gambar
+        'jpg'  => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png'  => 'image/png',
+        'gif'  => 'image/gif',
+        'bmp'  => 'image/bmp',
+        'webp' => 'image/webp',
+        'svg'  => 'image/svg+xml',
+
+        // Arsip
+        'zip'  => 'application/zip',
+        'rar'  => 'application/vnd.rar',
+        'gz'   => 'application/gzip',
+        'tar'  => 'application/x-tar',
+        '7z'   => 'application/x-7z-compressed',
+    ];
+
+    return $mimeTypes[$ext] ?? 'application/octet-stream';
+}
+}
+
 
 if (!function_exists('flc_file_manager')) {
     function flc_file_manager()
