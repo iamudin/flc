@@ -100,14 +100,16 @@ if (!function_exists('media_download')) {
     function media_download($media)
     {
         $media_exists =  \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? url($media . '?download=' . md5(request()->session()->getId())) : false;
+        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? route('media.download', [base64_encode(base64_encode(basename($media))),md5(request()->session()->getId())]) : false;
     }
 }
 
 if (!function_exists('media_hits')) {
-    function media_hits($id)
+    function media_hits($name)
     {
-        return \Leazycms\FLC\Models\File::whereIn('fileable_id', $id)->pluck('file_hits', 'file_name')->toArray();
+        if(media_exists(basename($name))){
+            return Cache::get("media_".basename($name))?->file_hits ?? 0;
+        }
     }
 }
 
@@ -206,6 +208,7 @@ if (!function_exists('media_caching')) {
                         'file_host' => $row->host,
                         'file_auth' => $row->file_auth,
                         'file_size' => $row->file_size,
+                        'file_hits' => $row->file_hits,
                         'file_disk' => $row->disk,
                     ]));
                 });

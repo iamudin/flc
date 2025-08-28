@@ -2,7 +2,6 @@
 namespace Leazycms\FLC\Models;
 use Leazycms\Web\Models\User;
 use Leazycms\FLC\Traits\Fileable;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;

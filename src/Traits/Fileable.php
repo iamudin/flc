@@ -70,6 +70,7 @@ trait Fileable
                 'file_host' => $file->host,
                 'file_auth' => $file->file_auth,
                 'file_size' => $file->file_size,
+                'file_hits' => $file->file_hits,
                 'file_disk' => $file->disk,
             ]));
         });
