@@ -98,13 +98,7 @@ if (!function_exists('flc_comment_form')) {
 
     }
 }
-if (!function_exists('media_size')) {
-    function media_size($media)
-    {
-        $media_exists =  \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? size_as_kb($media_exists->file_size)  : 'N/A';
-    }
-}
+
 if (!function_exists('get_ext')) {
     function get_ext($file)
     {
@@ -278,13 +272,14 @@ if (!function_exists('flc_ext')) {
     }
 }
 
-if (!function_exists('flc_file_size')) {
-    function flc_file_size($fileName)
+if (!function_exists('media_size')) {
+    function media_size($fileName)
     {
         $file = \Illuminate\Support\Facades\Cache::get("media_" . basename($fileName))?->file_path;
         if ($file) {
             return size_as_kb(\Illuminate\Support\Facades\Storage::size($file));
         }
+        return null;
     }
 }
 if (!function_exists('flc_file_to_path')) {
