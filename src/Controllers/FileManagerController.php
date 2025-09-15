@@ -97,49 +97,24 @@ XML;
 
     public function stream($slug, Request $request)
     {
-        $expiry = $request->query('expiry');
-        $token = $request->query('token');
+        // cek referer
+        $referer = $request->headers->get('referer');
 
-        if (!$expiry || !$token) {
-            return response('Invalid link', 403);
-        }
+        if ($referer) {
+            $allowedDomains = [
+                parse_url(config('app.url'), PHP_URL_HOST), // domain web kamu
+                'docs.google.com',                          // Google Docs Viewer
+            ];
 
-        // cek expired
-        if ($expiry < now()->timestamp) {
-            return response('Link expired', 403);
-        }
+            $validReferer = false;
+            foreach ($allowedDomains as $domain) {
+                if (str_contains($referer, $domain)) {
+                    $validReferer = true;
+                    break;
+                }
+            }
 
-        // ambil dari cache (pakai get, bukan pull)
-        $cacheKey = "stream_token:{$token}";
-        $data = Cache::get($cacheKey);
-
-        if (!$data || $data['slug'] !== $slug || $data['expiry'] != $expiry) {
-            return response('Unauthorized', 403);
-        }
-
-        // ambil file
-        $slug = dec64(dec64($slug));
-        $media = Cache::get("media_{$slug}");
-        abort_if(!$media, 404);
-
-        return response()->stream(function () use ($media) {
-            $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
-            abort_if($stream === false, 404);
-            fpassthru($stream);
-            fclose($stream);
-        }, 200, [
-            'Content-Type' => $media->file_type,
-            'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
-            'Cache-Control' => 'no-store, must-revalidate',
-        ]);
-    }
-
-
-    public function streasm($slug, $session)
-    {
-        if ($slug && $session) {
-            $slug = base64_decode(base64_decode($slug));
-            if (!media_exists($slug) || $session != md5(request()->session()->getId())) {
+            if (!$validReferer) {
                 $requestId = Str::uuid(); // unik, seperti AWS RequestId
                 $hostId = base64_encode(Str::random(32)); // mirip HostId AWS
                 $key = base64_encode(base64_encode($slug)) . '-' . md5(request()->session()->getId());
@@ -157,25 +132,45 @@ XML;
                 return response($xml, 404)
                     ->header('Content-Type', 'application/xml');
             }
+        } else {
+            // referer kosong (akses langsung / copy link) → tolak
+            $requestId = Str::uuid(); // unik, seperti AWS RequestId
+            $hostId = base64_encode(Str::random(32)); // mirip HostId AWS
+            $key = base64_encode(base64_encode($slug)) . '-' . md5(request()->session()->getId());
 
-            $media = Cache::get("media_{$slug}");
-            
-            $key = md5(request()->session()->getId() . $slug);
-            return response()->stream(function () use ($media) {
-                $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
-                abort_if($stream === false, 404);
-                fpassthru($stream);
-                fclose($stream);
-            }, 200, [
-                'Content-Type' => $media->file_type,
-                'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
-                'Cache-Control' => 'public, max-age=31536000, immutable',
-                'Pragma' => 'public',
-                'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
-                'Accept-Ranges' => 'bytes',
-            ]);
+            $xml = <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>NoSuchKey</Code>
+  <Message>The specified key does not exist.</Message>
+  <Key>{$key}</Key>
+  <RequestId>{$requestId}</RequestId>
+  <HostId>{$hostId}</HostId>
+</Error>
+XML;
+
+            return response($xml, 404)
+                ->header('Content-Type', 'application/xml');
         }
+
+        // ambil file dari storage
+        $slug = dec64(dec64($slug));
+        $media = Cache::get("media_{$slug}");
+        abort_if(!$media, 404);
+
+        return response()->stream(function () use ($media) {
+            $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
+            abort_if($stream === false, 404);
+            fpassthru($stream);
+            fclose($stream);
+        }, 200, [
+            'Content-Type' => $media->file_type,
+            'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
+            'Cache-Control' => 'no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+        ]);
     }
+
     public function destroy(Request $request)
     {
         abort_if(!$request->user() || !$request->isMethod('post'), 404);
