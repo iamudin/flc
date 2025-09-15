@@ -93,6 +93,88 @@ XML;
             return response()->download(Storage::disk($media->file_disk)->path($media->file_path), $key);
         }
     }
+
+
+    public function stream($slug, Request $request)
+    {
+        $expiry = $request->query('expiry');
+        $token = $request->query('token');
+
+        if (!$expiry || !$token) {
+            return response('Invalid link', 403);
+        }
+
+        // cek expired
+        if ($expiry < time()) {
+            return response('Link expired', 403);
+        }
+
+        // ambil dari cache
+        $cacheKey = "stream_token:{$token}";
+        $data = Cache::pull($cacheKey); // pakai pull agar langsung hilang (sekali pakai)
+
+        if (!$data || $data['slug'] !== $slug || $data['expiry'] != $expiry) {
+            return response('Unauthorized or already used', 403);
+        }
+
+        // ambil file
+        $slug = dec64(dec64($slug));
+        $media = Cache::get("media_{$slug}");
+        abort_if(!$media, 404);
+
+        return response()->stream(function () use ($media) {
+            $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
+            abort_if($stream === false, 404);
+            fpassthru($stream);
+            fclose($stream);
+        }, 200, [
+            'Content-Type' => $media->file_type,
+            'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
+            'Cache-Control' => 'no-store, must-revalidate', // biar gak cache lama
+        ]);
+    }
+
+    public function streasm($slug, $session)
+    {
+        if ($slug && $session) {
+            $slug = base64_decode(base64_decode($slug));
+            if (!media_exists($slug) || $session != md5(request()->session()->getId())) {
+                $requestId = Str::uuid(); // unik, seperti AWS RequestId
+                $hostId = base64_encode(Str::random(32)); // mirip HostId AWS
+                $key = base64_encode(base64_encode($slug)) . '-' . md5(request()->session()->getId());
+                $xml = <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>NoSuchKey</Code>
+  <Message>The specified key does not exist.</Message>
+  <Key>{$key}</Key>
+  <RequestId>{$requestId}</RequestId>
+  <HostId>{$hostId}</HostId>
+</Error>
+XML;
+
+                return response($xml, 404)
+                    ->header('Content-Type', 'application/xml');
+            }
+
+            $media = Cache::get("media_{$slug}");
+            
+            $key = md5(request()->session()->getId() . $slug);
+            return response()->stream(function () use ($media) {
+                $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
+                abort_if($stream === false, 404);
+                fpassthru($stream);
+                fclose($stream);
+            }, 200, [
+                'Content-Type' => $media->file_type,
+                'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
+                'Cache-Control' => 'public, max-age=31536000, immutable',
+                'Pragma' => 'public',
+                'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
+                'Accept-Ranges' => 'bytes',
+            ]);
+        }
+    }
     public function destroy(Request $request)
     {
         abort_if(!$request->user() || !$request->isMethod('post'), 404);

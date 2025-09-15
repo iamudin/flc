@@ -141,6 +141,66 @@ if (!function_exists('allow_mime')) {
         return 'application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream,video/mp4,image/gif,image/webp';
     }
 }
+function one_time_signed_stream_url($slug, $minutes = 1)
+{
+    $expiry = now()->addMinutes($minutes)->timestamp;
+    $secret = config('app.key');
+
+    $token = hash_hmac('sha256', $slug . $expiry . Str::random(16), $secret);
+
+    // Simpan ke cache (berlaku sampai expired)
+    Cache::put("stream_token:{$token}", [
+        'slug' => $slug,
+        'expiry' => $expiry,
+    ], $minutes * 60);
+
+    return url("/media/stream-{$slug}?expiry={$expiry}&token={$token}");
+}
+function stream_file($slug, Request $request)
+    {
+        $expiry = $request->query('expiry');
+        $token = $request->query('token');
+
+        if (!$expiry || !$token) {
+            return response('Invalid link', 403);
+        }
+        // cek expired
+        if ($expiry < time()) {
+            return response('Link expired', 403);
+        }
+
+        // ambil dari cache
+        $cacheKey = "stream_token:{$token}";
+        $data = Cache::pull($cacheKey); // pakai pull agar langsung hilang (sekali pakai)
+
+        if (!$data || $data['slug'] !== $slug || $data['expiry'] != $expiry) {
+            return response('Unauthorized or already used', 403);
+        }
+
+        // ambil file
+        $media = Cache::get("media_{$slug}");
+        abort_if(!$media, 404);
+
+        return response()->stream(function () use ($media) {
+            $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
+            abort_if($stream === false, 404);
+            fpassthru($stream);
+            fclose($stream);
+        }, 200, [
+            'Content-Type' => $media->file_type,
+            'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
+            'Cache-Control' => 'no-store, must-revalidate', // biar gak cache lama
+        ]);
+    }
+
+if (!function_exists('media_stream')) {
+    function media_stream($media)
+    {
+        
+        $media_exists = \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
+        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? urlencode(one_time_signed_stream_url(enc64(enc64(basename($media))))) : false;
+    }
+}
 if (!function_exists('media_download')) {
     function media_download($media)
     {
