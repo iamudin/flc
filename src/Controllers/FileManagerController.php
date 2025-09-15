@@ -105,7 +105,7 @@ XML;
         }
 
         // cek expired
-        if ($expiry < time()) {
+        if ($expiry < now()->timestamp) {
             return response('Link expired', 403);
         }
 

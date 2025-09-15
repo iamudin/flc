@@ -141,21 +141,36 @@ if (!function_exists('allow_mime')) {
         return 'application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream,video/mp4,image/gif,image/webp';
     }
 }
-function one_time_signed_stream_url($slug, $minutes = 1)
+function signed_stream_url($slug, $minutes = 1)
 {
-    $expiry = now()->addMinutes($minutes)->timestamp;
     $secret = config('app.key');
 
-    $token = hash_hmac('sha256', $slug . $expiry . Str::random(16), $secret);
+    // cari token lama di cache
+    $cacheKey = "active_stream:{$slug}";
+    $data = Cache::get($cacheKey);
 
-    // Simpan ke cache (berlaku sampai expired)
-    Cache::put("stream_token:{$token}", [
+ 
+    if ($data && $data['expiry'] > now()->timestamp) {
+        return url("/media/stream-{$slug}?expiry={$data['expiry']}&token={$data['token']}");
+    }
+
+
+    // kalau expired → buat baru
+    $expiry = now()->addMinutes($minutes)->timestamp;
+    $token = hash_hmac('sha256', $slug . $expiry, $secret);
+
+    $data = [
+        'token' => $token,
         'slug' => $slug,
         'expiry' => $expiry,
-    ], $minutes * 60);
+    ];
+
+    Cache::put("active_stream:{$slug}", $data, $minutes * 60);
+    Cache::put("stream_token:{$token}", $data, $minutes * 60);
 
     return url("/media/stream-{$slug}?expiry={$expiry}&token={$token}");
 }
+
 function stream_file($slug, Request $request)
     {
         $expiry = $request->query('expiry');
@@ -198,7 +213,7 @@ if (!function_exists('media_stream')) {
     {
         
         $media_exists = \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? urlencode(one_time_signed_stream_url(enc64(enc64(basename($media))))) : false;
+        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? signed_stream_url(enc64(enc64(basename($media)))) : false;
     }
 }
 if (!function_exists('media_download')) {
