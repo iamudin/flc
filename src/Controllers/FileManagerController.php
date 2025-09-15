@@ -109,12 +109,12 @@ XML;
             return response('Link expired', 403);
         }
 
-        // ambil dari cache
+        // ambil dari cache (pakai get, bukan pull)
         $cacheKey = "stream_token:{$token}";
-        $data = Cache::pull($cacheKey); // pakai pull agar langsung hilang (sekali pakai)
+        $data = Cache::get($cacheKey);
 
         if (!$data || $data['slug'] !== $slug || $data['expiry'] != $expiry) {
-            return response('Unauthorized or already used', 403);
+            return response('Unauthorized', 403);
         }
 
         // ambil file
@@ -130,9 +130,10 @@ XML;
         }, 200, [
             'Content-Type' => $media->file_type,
             'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
-            'Cache-Control' => 'no-store, must-revalidate', // biar gak cache lama
+            'Cache-Control' => 'no-store, must-revalidate',
         ]);
     }
+
 
     public function streasm($slug, $session)
     {
