@@ -98,7 +98,7 @@ XML;
     public function stream($slug, Request $request)
     {
         // cek referer
-        $referer = $request->userAgent();
+        $referer = $request->userAgent().'|'.$request->headers->get('referer');
 
         if ($referer) {
             $allowedDomains = [
