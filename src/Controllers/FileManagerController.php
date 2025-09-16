@@ -98,12 +98,12 @@ XML;
     public function stream($slug, Request $request)
     {
         // cek referer
-        $referer = $request->headers->get('referer');
+        $referer = $request->userAgent();
 
         if ($referer) {
             $allowedDomains = [
                 parse_url(config('app.url'), PHP_URL_HOST), // domain web kamu
-                'docs.google.com',                          // Google Docs Viewer
+                'drive.google.com',                          // Google Docs Viewer
             ];
 
             $validReferer = false;
@@ -117,7 +117,7 @@ XML;
             if (!$validReferer) {
                 $requestId = Str::uuid(); // unik, seperti AWS RequestId
                 $hostId = base64_encode(Str::random(32)); // mirip HostId AWS
-                $key = base64_encode(base64_encode($slug)) . '-' . md5(request()->session()->getId());
+                $key = base64_encode(base64_encode(md5(request()->session()->getId())));
                 $xml = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
 <Error>
@@ -136,7 +136,8 @@ XML;
             // referer kosong (akses langsung / copy link) → tolak
             $requestId = Str::uuid(); // unik, seperti AWS RequestId
             $hostId = base64_encode(Str::random(32)); // mirip HostId AWS
-            $key = base64_encode(base64_encode($slug)) . '-' . md5(request()->session()->getId());
+            $key = base64_encode(base64_encode(md5(request()->session()->getId())));
+
 
             $xml = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
