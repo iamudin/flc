@@ -142,42 +142,7 @@ if (!function_exists('allow_mime')) {
     }
 }
 
-function stream_file($slug, Request $request)
-    {
-        $expiry = $request->query('expiry');
-        $token = $request->query('token');
 
-        if (!$expiry || !$token) {
-            return response('Invalid link', 403);
-        }
-        // cek expired
-        if ($expiry < time()) {
-            return response('Link expired', 403);
-        }
-
-        // ambil dari cache
-        $cacheKey = "stream_token:{$token}";
-        $data = Cache::pull($cacheKey); // pakai pull agar langsung hilang (sekali pakai)
-
-        if (!$data || $data['slug'] !== $slug || $data['expiry'] != $expiry) {
-            return response('Unauthorized or already used', 403);
-        }
-
-        // ambil file
-        $media = Cache::get("media_{$slug}");
-        abort_if(!$media, 404);
-
-        return response()->stream(function () use ($media) {
-            $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
-            abort_if($stream === false, 404);
-            fpassthru($stream);
-            fclose($stream);
-        }, 200, [
-            'Content-Type' => $media->file_type,
-            'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
-            'Cache-Control' => 'no-store, must-revalidate', // biar gak cache lama
-        ]);
-    }
 
 if (!function_exists('media_stream')) {
     function media_stream($media)

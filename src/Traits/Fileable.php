@@ -104,7 +104,7 @@ catch(\Exception $e){
 
                 // Kompres gambar menggunakan Intervention Image
             $image = Image::make($file);
-            $image->resize($width ?? 1000, $height, function ($constraint) {
+            $image->resize($width ?? 1200, $height, function ($constraint) {
                 $constraint->aspectRatio();
                 $constraint->upsize();
             });
@@ -113,7 +113,7 @@ catch(\Exception $e){
                 $finalFileName = $fileNameWithoutExt . '.webp';
                 $path = $directory . '/' . $finalFileName;
                 // Simpan gambar dalam format WebP
-                $imageData = (string) $image->encode('webp', 80); // kualitas 80
+                $imageData = (string) $image->encode('webp', 95); // kualitas 80
                 Storage::put($path, $imageData);
             } else {
                 $path = $file->storeAs($directory, $fileName);
