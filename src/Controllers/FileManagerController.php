@@ -89,7 +89,7 @@ XML;
                     Cache::forever("media_{$slug}", $media);
                 }
             }
-            $key = md5(request()->session()->getId().$slug);
+            $key = md5(request()->session()->getId())."_".$slug;
             return response()->download(Storage::disk($media->file_disk)->path($media->file_path), $key);
         }
     }
