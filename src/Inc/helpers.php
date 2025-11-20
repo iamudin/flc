@@ -43,6 +43,8 @@ function getMimeTypeByExtension($filename) {
 
         // Arsip
         'zip'  => 'application/zip',
+        'mp4' => 'video/mp4',
+        'mp3' => 'audio/mpeg',
         'rar'  => 'application/vnd.rar',
         'gz'   => 'application/gzip',
         'tar'  => 'application/x-tar',
@@ -138,7 +140,7 @@ if (!function_exists('allow_mime')) {
 
     function allow_mime()
     {
-        return 'application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream,video/mp4,image/gif,image/webp';
+        return 'audio/mpeg,application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream,video/mp4,image/gif,image/webp';
     }
 }
 
@@ -279,7 +281,7 @@ if (!function_exists('media_caching')) {
 if (!function_exists('flc_ext')) {
     function flc_ext()
     {
-        return ['jpg', 'jpeg', 'gif', 'zip', 'rar', 'doc', 'docx', 'pdf', 'xls', 'xlsx', 'png', 'webp', 'mp4'];
+        return ['jpg', 'jpeg', 'gif', 'zip', 'rar', 'doc', 'docx', 'pdf', 'xls', 'xlsx', 'png', 'webp', 'mp4','mp3'];
     }
 }
 
