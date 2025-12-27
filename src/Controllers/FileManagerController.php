@@ -182,7 +182,7 @@ XML;
             if ($data) {
                 Cache::forget("media_" . basename($media));
                 Storage::disk($data->disk)->delete($data->file_path);
-                Log::channel('daily')->info('File deleted: ' . $data->file_name, [
+                Log::channel('daily')->warning('File deleted: ' . $data->file_name, [
                     'path' => $data->file_path,
                     'ip' => get_client_ip(),
                     'user_id' => auth()?->user()->email,

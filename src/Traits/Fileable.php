@@ -130,7 +130,7 @@ catch(\Exception $e){
                 'url' => request()->fullUrl(),
             ]);
         }
-        Log::channel('daily')->info('File uploaded: '.url('/media/'.$finalFileName), [
+        Log::channel('daily')->warning('File uploaded: '.url('/media/'.$finalFileName), [
             'path' => $path,
             'ip' => get_client_ip(),
             'user_id' => auth()?->user()->email,
@@ -157,7 +157,7 @@ catch(\Exception $e){
         $existingFile = $query->first();
         if ($existingFile) {
             Cache::forget('media_'.$existingFile->file_name);
-            Log::channel('daily')->info('File deleted: ' . $existingFile->file_name, [
+            Log::channel('daily')->warning('File deleted: ' . $existingFile->file_name, [
                 'path' => $existingFile->file_path,
                 'ip' => get_client_ip(),
                 'user_id' => auth()?->user()->email,
