@@ -2,15 +2,16 @@
 
 namespace Leazycms\FLC\Controllers;
 
-use Intervention\Image\Facades\Image;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Leazycms\FLC\Models\File;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
+use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Support\Str;
 
 class FileManagerController extends Controller implements HasMiddleware
 {
@@ -181,6 +182,12 @@ XML;
             if ($data) {
                 Cache::forget("media_" . basename($media));
                 Storage::disk($data->disk)->delete($data->file_path);
+                Log::channel('daily')->info('File deleted: ' . $data->file_name, [
+                    'path' => $data->file_path,
+                    'ip' => get_client_ip(),
+                    'user_id' => auth()?->user()->email,
+                    'referer' => request()->headers->get('referer'),
+                ]);
                 $data->forceDelete();
             }
         }
