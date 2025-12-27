@@ -5,6 +5,7 @@ use Leazycms\FLC\Models\File;
 use Illuminate\Support\Facades\Cache;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Storage;
+use Log;
 
 trait Fileable
 {
@@ -77,8 +78,11 @@ trait Fileable
         return '/media/'.$upload->name;
     }
 catch(\Exception $e){
-
-
+    Log::channel('daily')->error('File upload error: ' . $e->getMessage(), [
+        'info' => 'Error during file upload',
+        'ip' => get_client_ip(),
+        'url' => request()->fullUrl(),
+    ]);
 }
     }
     private function handleFileUpload($file,$width=null,$height=null)
@@ -120,8 +124,20 @@ catch(\Exception $e){
                 $finalFileName = $fileName;
         }
         } catch (\Exception $e) {
-            return back()->send()->with('success',$e);
+            Log::channel('daily')->error('File upload error: ' . $e->getMessage(), [
+                'info' => 'Error during file upload',
+                'ip' => get_client_ip(),
+                'url' => request()->fullUrl(),
+            ]);
         }
+        Log::channel('daily')->info('File uploaded: '.url('/media/'.$finalFileName), [
+            'path' => $path,
+            'ip' => get_client_ip(),
+            'user_id' => auth()?->user()->email,
+            'url' => request()->fullUrl(),
+            'referer' => request()->headers->get('referer'),
+
+        ]);
         return json_decode(json_encode(['path'=>$path,'name'=>$finalFileName]));
     }
 
@@ -141,7 +157,14 @@ catch(\Exception $e){
         $existingFile = $query->first();
         if ($existingFile) {
             Cache::forget('media_'.$existingFile->file_name);
+            Log::channel('daily')->info('File deleted: ' . $existingFile->file_name, [
+                'path' => $existingFile->file_path,
+                'ip' => get_client_ip(),
+                'user_id' => auth()?->user()->email,
+                'referer' => request()->headers->get('referer'),
+            ]);
             $existingFile->deleteFile(); // Menghapus file dari storage dan record dari database
+       
         }
     }
 }
