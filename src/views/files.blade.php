@@ -25,7 +25,7 @@
                 <td width="70px">
                     <div class="btn-group">
                     <button data-copy="{{ route('stream',$item->file_name) }}" class="copy btn btn-sm btn-warning fa fa-link "></button>
-                    <a href="{{ route('stream',$item->file_name) }}" class="btn btn-sm btn-primary fa fa-eye"></a>
+                    <span data-media="{{ route('stream',$item->file_name) }}" data-ext="{{ str(media_extension($item->file_name))->lower() }}"  class="btn-view-media btn btn-sm btn-primary fa fa-eye"></span>
                     <button onclick="lw_media_destroy('{{ $item->file_name }}')" href="" class="btn btn-sm btn-danger fa fa-trash-o"></button>
                 </div>
                 </td>
