@@ -80,6 +80,7 @@ if (!function_exists('flc_comment_form')) {
     function flc_comment_form($title='Komentar', $attr=false)
     {   if($data = config('modules.data')){
             $form_open = $data->allow_comment;
+            if($form_open=='Y'){
             $attribute = array(
                 'email'=> isset($attr['email']) && $attr['email'] !== true ? false : true,
                 'link'=>isset($attr['link']) && $attr['link'] !== true ? false : true,
@@ -95,6 +96,7 @@ if (!function_exists('flc_comment_form')) {
             ]);
         session()->put('captcha',str()->random(6));
         return \Illuminate\Support\Facades\View::make('flc::comment_form', ['title'=>$title,'allow_comment'=>$form_open,'comments' => paginate($data->comments->where('status','publish')->sortByDesc('created_at'),10),'attribute'=>$attribute ?? []]);
+            }
 
 }
 
