@@ -174,8 +174,11 @@ if (!function_exists('media_hits')) {
 }
 
 if (!function_exists('media_exists')) {
-    function media_exists($media)
+    function media_exists($media='')
     {
+        if(empty($media)){
+            return false;
+        }
         $media_exists =  \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
         return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? true : false;
     }
