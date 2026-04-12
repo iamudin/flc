@@ -77,7 +77,7 @@ XML;
                     ->first();
 
                 if ($file && Storage::disk($file->disk)->exists($file->file_path)) {
-                    $media = json_decode(json_encode([
+                    $media = [
                         'file_path' => $file->file_path,
                         'file_type' => $file->file_type,
                         'file_host' => $file->host,
@@ -85,11 +85,13 @@ XML;
                         'file_size' => $file->file_size,
                         'file_hits' => $file->file_hits,
                         'file_disk' => $file->disk,
-                    ]));
+                    ];
 
                     Cache::forever("media_{$slug}", $media);
                 }
             }
+            $media = json_decode(json_encode($media));
+
             $key = md5(request()->session()->getId())."_".$slug;
             return response()->download(Storage::disk($media->file_disk)->path($media->file_path), $key);
         }
@@ -159,7 +161,7 @@ XML;
         $slug = dec64(dec64($slug));
         $media = Cache::get("media_{$slug}");
         abort_if(!$media, 404);
-
+        $media = json_decode(json_encode($media));
         return response()->stream(function () use ($media) {
             $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
             abort_if($stream === false, 404);
@@ -200,7 +202,7 @@ XML;
                 ->first();
 
             if ($file && Storage::disk($file->disk)->exists($file->file_path)) {
-                return json_decode(json_encode([
+                return [
                     'file_path' => $file->file_path,
                     'file_type' => $file->file_type,
                     'file_host' => $file->host,
@@ -208,11 +210,11 @@ XML;
                     'file_size' => $file->file_size,
                     'file_hits' => $file->file_hits,
                     'file_disk' => $file->disk,
-                ]));
+                ];
             }
             return null;
         });
-
+        $media = json_decode(json_encode($media));
         if (empty($media) || (isset($media->file_host) && request()->getHost() != $media->file_host || !Storage::disk($media->file_disk)->exists($media->file_path))) {
             $requestId = Str::uuid(); // unik, seperti AWS RequestId
             $hostId = base64_encode(Str::random(32)); // mirip HostId AWS

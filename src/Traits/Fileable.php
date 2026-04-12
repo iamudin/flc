@@ -65,7 +65,7 @@ trait Fileable
             $file = $this->files()->create($data);
         }
         Cache::rememberForever("media_{$file->file_name}", function () use ($file) {
-            return json_decode(json_encode([
+            return [
                 'file_path' => $file->file_path,
                 'file_type' => $file->file_type,
                 'file_host' => $file->host,
@@ -73,7 +73,7 @@ trait Fileable
                 'file_size' => $file->file_size,
                 'file_hits' => $file->file_hits,
                 'file_disk' => $file->disk,
-            ]));
+            ];
         });
         return '/media/'.$upload->name;
     }
