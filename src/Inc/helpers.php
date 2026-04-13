@@ -119,7 +119,7 @@ if (!function_exists('get_ext')) {
 if (!function_exists('media_extension')) {
     function media_extension($media)
     {
-        $media_exists =  \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
+        $media_exists =  json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($media)))) ?? null;
         return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? str(get_ext($media))->upper()  : 'N/A';
     }
 }
@@ -152,14 +152,14 @@ if (!function_exists('media_stream')) {
     function media_stream($media)
     {
         
-        $media_exists = \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
+        $media_exists = json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($media)))) ?? null;
         return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? urlencode(route('media.stream',enc64(enc64(basename($media))))) : false;
     }
 }
 if (!function_exists('media_download')) {
     function media_download($media)
     {
-        $media_exists =  \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
+        $media_exists =  json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($media)))) ?? null;
         return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? route('media.download', [base64_encode(base64_encode(basename($media))),md5(request()->session()->getId())]) : false;
     }
 }
@@ -168,7 +168,7 @@ if (!function_exists('media_hits')) {
     function media_hits($name)
     {
         if(media_exists(basename($name))){
-            return Cache::get("media_".basename($name))?->file_hits ?? 0;
+            return json_decode(json_encode(Cache::get("media_".basename($name))))?->file_hits ?? 0;
         }
     }
 }
@@ -274,7 +274,7 @@ if (!function_exists('media_caching')) {
         foreach (\Leazycms\FLC\Models\File::select('file_path', 'file_name', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host')->get() as $row) {
             if (Storage::disk($row->file_disk)->exists($row->file_path)) {
                 Cache::rememberForever("media_{$row->file_name}",function () use ($row) {
-                    return json_decode(json_encode([
+                    return [
                         'file_path' => $row->file_path,
                         'file_type' => $row->file_type,
                         'file_host' => $row->host,
@@ -282,7 +282,7 @@ if (!function_exists('media_caching')) {
                         'file_size' => $row->file_size,
                         'file_hits' => $row->file_hits,
                         'file_disk' => $row->disk,
-                    ]));
+                    ];
                 });
             }
         }
@@ -302,7 +302,7 @@ if (!function_exists('flc_ext')) {
 if (!function_exists('media_size')) {
     function media_size($fileName)
     {
-        $file = \Illuminate\Support\Facades\Cache::get("media_" . basename($fileName))?->file_path;
+        $file = json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($fileName))))?->file_path;
         if ($file) {
             return size_as_kb(\Illuminate\Support\Facades\Storage::size($file));
         }
@@ -312,7 +312,7 @@ if (!function_exists('media_size')) {
 if (!function_exists('flc_file_to_path')) {
     function flc_file_to_path($fileName)
     {
-        $file = \Illuminate\Support\Facades\Cache::get("media_" . basename($fileName))?->file_path;
+        $file = json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($fileName))))?->file_path;
         if ($file) {
             return Storage::path($file);
         }
