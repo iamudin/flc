@@ -187,7 +187,7 @@ if (!function_exists('media_exists')) {
 if (!function_exists('media_path')) {
     function media_path($media)
     {
-        $media_exists = \Illuminate\Support\Facades\Cache::get("media_" . basename($media)) ?? null;
+        $media_exists = json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($media)))) ?? null;
         return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? Storage::disk($media_exists->file_disk)->path($media_exists->file_path) : false;
         
     }
