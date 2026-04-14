@@ -1,6 +1,8 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 if (!function_exists('getMimeTypeByExtension')) {
 function getMimeTypeByExtension($filename) {
@@ -94,7 +96,7 @@ if (!function_exists('flc_comment_form')) {
                 'comments.childs.childs.childs.user', // jika ingin dukung hingga 3 level
                 'comments.childs.childs.childs.childs.user', // jika ingin dukung hingga 3 level
             ]);
-        session()->put('captcha',str()->random(6));
+        Session::put('captcha',str()->random(6));
         return \Illuminate\Support\Facades\View::make('flc::comment_form', ['title'=>$title,'allow_comment'=>$form_open,'comments' => paginate($data->comments->where('status','publish')->sortByDesc('created_at'),10),'attribute'=>$attribute ?? []]);
             }
 
@@ -160,7 +162,7 @@ if (!function_exists('media_download')) {
     function media_download($media)
     {
         $media_exists =  json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($media)))) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? route('media.download', [base64_encode(base64_encode(basename($media))),md5(request()->session()->getId())]) : false;
+        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? route('media.download', [base64_encode(base64_encode(basename($media))),md5((new Request)->session()->getId())]) : false;
     }
 }
 
@@ -214,9 +216,9 @@ function media_capture(){
         null, // Error (null berarti tidak ada)
         true // Set sebagai test mode
     );
-    request()->files->set('file', $uploadedFile);
+    (new Request)->files->set('file', $uploadedFile);
     $capture = $post->addFile([
-        'file'=>request()->file('file'),
+        'file'=> (new Request)->file('file'),
         'purpose'=>'capture-web',
         'mime_type'=> ['image/jpeg']
     ]);
