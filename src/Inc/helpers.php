@@ -83,6 +83,9 @@ if (!function_exists('flc_comment_form')) {
     {   if($data = config('modules.data')){
             $form_open = $data->allow_comment;
             if($form_open=='Y'){
+                if($attr){
+                    $attr = (array) $attr;
+                }
             $attribute = array(
                 'email'=> isset($attr['email']) && $attr['email'] !== true ? false : true,
                 'link'=>isset($attr['link']) && $attr['link'] !== true ? false : true,
