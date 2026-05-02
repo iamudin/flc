@@ -307,9 +307,9 @@ if (!function_exists('flc_ext')) {
 if (!function_exists('media_size')) {
     function media_size($fileName)
     {
-        $file = json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($fileName))))?->file_path;
-        if ($file) {
-            return size_as_kb(\Illuminate\Support\Facades\Storage::size($file));
+        $file = json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($fileName))));
+        if ($file && Storage::disk($file->file_disk)->exists($file->file_path)) {
+            return size_as_kb(Storage::size($file->file_path));
         }
         return null;
     }
