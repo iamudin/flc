@@ -329,7 +329,7 @@ if (!function_exists('media_viewer')) {
 
         // === OFFICE FILE (Microsoft Viewer) ===
         if (in_array($ext, $officeExt)) {
-            $officeUrl = "https://view.officeapps.live.com/op/embed.aspx?src=" . url($media);
+            $officeUrl = "https://view.officeapps.live.com/op/embed.aspx?src=" . urlencode(url($media));
 
             return "
             <iframe 
