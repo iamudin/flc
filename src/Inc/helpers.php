@@ -165,7 +165,7 @@ if (!function_exists('media_download')) {
     function media_download($media)
     {
         $media_exists =  json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($media)))) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? route('media.download', [base64_encode(base64_encode(basename($media))),md5((new Request)->session()->getId())]) : false;
+        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? route('media.download', [base64_encode(base64_encode(basename($media))),md5(session()->getId())]) : false;
     }
 }
 
@@ -219,9 +219,9 @@ function media_capture(){
         null, // Error (null berarti tidak ada)
         true // Set sebagai test mode
     );
-    (new Request)->files->set('file', $uploadedFile);
+    request()->files->set('file', $uploadedFile);
     $capture = $post->addFile([
-        'file'=> (new Request)->file('file'),
+        'file'=> request()->file('file'),
         'purpose'=>'capture-web',
         'mime_type'=> ['image/jpeg']
     ]);
