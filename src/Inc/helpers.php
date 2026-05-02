@@ -304,62 +304,105 @@ if (!function_exists('flc_ext')) {
     }
 }
 
-if (!function_exists('file_viewer_iframe')) {
-    function file_viewer_iframe(string $media, $height = 600)
+
+if (!function_exists('media_viewer')) {
+    function media_viewer(string $media, $height = 600)
     {
         $id = 'viewer_' . md5($media . uniqid());
         $fileUrl = media_stream($media) ?? $media;
-        return "
-        <div id='{$id}_wrapper' style='width:100%;'>
 
-            <div id='{$id}_loading' style='text-align:center; padding:20px;'>
-                Memuat preview...
+        $ext = strtolower(pathinfo($media, PATHINFO_EXTENSION));
+
+        // === TYPE DETECTION ===
+        $imageExt = ['jpg','jpeg','png','gif','webp'];
+        $officeExt = ['doc','docx','xls','xlsx','ppt','pptx'];
+        $pdfExt = ['pdf'];
+
+        // === IMAGE ===
+        if (in_array($ext, $imageExt)) {
+            return "
+            <div style='text-align:center;'>
+                <img src='{$fileUrl}' style='max-width:100%; height:auto;' />
             </div>
+            ";
+        }
 
+        // === OFFICE FILE (Microsoft Viewer) ===
+        if (in_array($ext, $officeExt)) {
+            $officeUrl = "https://view.officeapps.live.com/op/embed.aspx?src=" . urlencode($fileUrl);
+
+            return "
             <iframe 
-                id='{$id}_iframe'
-                src=''
+                src='{$officeUrl}'
                 width='100%' 
                 height='{$height}'
-                style='border:none; display:none;'>
+                style='border:none;'>
             </iframe>
+            ";
+        }
 
+        // === PDF / DEFAULT (Google Viewer + fallback) ===
+        if (in_array($ext, $pdfExt)) {
+
+            return "
+            <div id='{$id}_wrapper' style='width:100%;'>
+
+                <div id='{$id}_loading' style='text-align:center; padding:20px;'>
+                    Memuat preview...
+                </div>
+
+                <iframe 
+                    id='{$id}_iframe'
+                    src=''
+                    width='100%' 
+                    height='{$height}'
+                    style='border:none; display:none;'>
+                </iframe>
+
+            </div>
+
+            <script>
+            (function(){
+                const iframe = document.getElementById('{$id}_iframe');
+                const loading = document.getElementById('{$id}_loading');
+
+                let loaded = false;
+                let switched = false;
+
+                const googleUrl = 'https://docs.google.com/gview?url=' + encodeURIComponent('{$fileUrl}') + '&embedded=true';
+
+                iframe.src = googleUrl;
+
+                iframe.onload = function () {
+                    if (!switched) {
+                        loaded = true;
+                        loading.style.display = 'none';
+                        iframe.style.display = 'block';
+                    }
+                };
+
+                setTimeout(function () {
+                    if (!loaded) {
+                        switched = true;
+
+                        // fallback ke file langsung
+                        iframe.src = '{$fileUrl}';
+
+                        loading.style.display = 'none';
+                        iframe.style.display = 'block';
+                    }
+                }, 6000);
+
+            })();
+            </script>
+            ";
+        }
+
+        // === DEFAULT (tidak bisa preview) ===
+        return "
+        <div style='text-align:center; padding:20px;'>
+            <p>Preview file tidak tersedia.</p>
         </div>
-
-        <script>
-        (function(){
-            const iframe = document.getElementById('{$id}_iframe');
-            const loading = document.getElementById('{$id}_loading');
-
-            let loaded = false;
-            let switched = false;
-
-            const googleUrl = 'https://docs.google.com/gview?url=' + encodeURIComponent('{$fileUrl}') + '&embedded=true';
-
-            iframe.src = googleUrl;
-
-            iframe.onload = function () {
-                if (!switched) {
-                    loaded = true;
-                    loading.style.display = 'none';
-                    iframe.style.display = 'block';
-                }
-            };
-
-            setTimeout(function () {
-                if (!loaded) {
-                    switched = true;
-
-                    // ganti src ke file asli
-                    iframe.src = '{$fileUrl}';
-
-                    loading.style.display = 'none';
-                    iframe.style.display = 'block';
-                }
-            }, 6000);
-
-        })();
-        </script>
         ";
     }
 }
