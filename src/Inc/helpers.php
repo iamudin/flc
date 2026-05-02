@@ -339,7 +339,6 @@ if (!function_exists('file_viewer_iframe')) {
             iframe.src = googleUrl;
 
             iframe.onload = function () {
-                // Jika belum pernah fallback → anggap sukses
                 if (!switched) {
                     loaded = true;
                     loading.style.display = 'none';
@@ -357,7 +356,7 @@ if (!function_exists('file_viewer_iframe')) {
                     loading.style.display = 'none';
                     iframe.style.display = 'block';
                 }
-            }, 3000);
+            }, 6000);
 
         })();
         </script>
