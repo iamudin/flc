@@ -67,7 +67,7 @@ XML;
             }
 
             File::whereFileName($slug)->increment('file_hits');
-            $media = Cache::get("media_{$slug}");
+            $media = json_decode(json_encode(Cache::get("media_{$slug}")));
             if ($media) {
                 $media->file_hits = ($media->file_hits ?? 0) + 1;
                 Cache::forever("media_{$slug}", $media);
