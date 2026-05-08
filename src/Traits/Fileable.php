@@ -52,7 +52,7 @@ trait Fileable
             'file_size' => Storage::size($upload->path),
             'purpose' => $purpose,
             'disk' => config('filesystems.default'),
-            'host' => request()->getHost(),
+            'host' => app()->has('tenant') && $this->tenant_id !== tenant()->id ? $this->tenant->domain : request()->getHost(),
             'child_id' => $childId,
         ];
         if($self_upload){
@@ -88,8 +88,8 @@ catch(\Exception $e){
     private function handleFileUpload($file,$width=null,$height=null)
     {
 
-
-        $directory =  (config('flc.disk_directory') ? config('flc.disk_directory').'/' : request()->getHost().'/').Carbon::now()->format('Y/m/d');
+        $host = app()->has('tenant') && $this->tenant_id !== tenant()->id ? $this->tenant->domain : request()->getHost();
+        $directory =  (config('flc.disk_directory') ? config('flc.disk_directory').'/' : $host.'/').Carbon::now()->format('Y/m/d');
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $sluggedName = str($originalName)->slug();
         $extension = str($file->getClientOriginalExtension())->lower();
