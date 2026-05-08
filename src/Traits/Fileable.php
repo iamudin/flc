@@ -1,11 +1,12 @@
 <?php
 namespace Leazycms\FLC\Traits;
 use Carbon\Carbon;
-use Leazycms\FLC\Models\File;
 use Illuminate\Support\Facades\Cache;
-use Intervention\Image\Facades\Image;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Log;
+use Intervention\Image\Facades\Image;
+use Leazycms\FLC\Models\File;
+
 
 trait Fileable
 {
@@ -164,7 +165,7 @@ catch(\Exception $e){
                 'referer' => request()->headers->get('referer'),
             ]);
             $existingFile->deleteFile(); // Menghapus file dari storage dan record dari database
-       
+
         }
     }
 }
