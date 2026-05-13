@@ -1,11 +1,11 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 if (!function_exists('getMimeTypeByExtension')) {
-function getMimeTypeByExtension($filename) {
+function getMimeTypeByExtension(string $filename) {
      $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 
     $mimeTypes = [
@@ -61,7 +61,7 @@ function getMimeTypeByExtension($filename) {
 if (!function_exists('flc_file_manager')) {
     function flc_file_manager()
     {
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return 'Not Authorized';
         }
         $data = \Leazycms\FLC\Models\File::with('user')->latest()->paginate(10);
@@ -71,7 +71,7 @@ if (!function_exists('flc_file_manager')) {
 if (!function_exists('flc_comment')) {
     function flc_comment()
     {
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return 'Not Authorized';
         }
         $data = \Leazycms\FLC\Models\Comment::with('user')->latest()->paginate(10);
@@ -108,6 +108,13 @@ if (!function_exists('flc_comment_form')) {
     }
 }
 
+if (!function_exists('media')) {
+    function media($media)
+    {
+        return \Leazycms\FLC\Inc\MediaHandler::getInstance($media);
+    }
+}
+
 if (!function_exists('get_ext')) {
     function get_ext($file)
     {
@@ -122,14 +129,13 @@ if (!function_exists('get_ext')) {
     }
 }
 if (!function_exists('media_extension')) {
-    function media_extension($media)
+    function media_extension(string $media)
     {
-        $media_exists =  json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($media)))) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? str(get_ext($media))->upper()  : 'N/A';
+        return media($media)->extension();
     }
 }
 if (!function_exists('size_as_kb')) {
-    function size_as_kb($bytes, $precision = 2)
+    function size_as_kb(int $bytes, $precision = 2)
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
 
@@ -156,45 +162,34 @@ if (!function_exists('allow_mime')) {
 if (!function_exists('media_stream')) {
     function media_stream($media)
     {
-        
-        $media_exists = json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($media)))) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? route('media.stream',enc64(enc64(basename($media)))) : false;
+        return media($media)->stream();
     }
 }
 if (!function_exists('media_download')) {
     function media_download($media)
     {
-        $media_exists =  json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($media)))) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? route('media.download', [base64_encode(base64_encode(basename($media))),md5(session()->getId())]) : false;
+        return media($media)->download();
     }
 }
 
 if (!function_exists('media_hits')) {
     function media_hits($name)
     {
-        if(media_exists(basename($name))){
-            return json_decode(json_encode(Cache::get("media_".basename($name))))?->file_hits ?? 0;
-        }
+        return media($name)->hits();
     }
 }
 
 if (!function_exists('media_exists')) {
     function media_exists($media='')
     {
-        if(empty($media)){
-            return false;
-        }
-        $media_exists =  json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($media)))) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? true : false;
+        return media($media)->isExists();
     }
 }
 
 if (!function_exists('media_path')) {
     function media_path($media)
     {
-        $media_exists = json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($media)))) ?? null;
-        return $media_exists && isset($media_exists->file_path) && \Illuminate\Support\Facades\Storage::disk($media_exists->file_disk)->exists($media_exists->file_path) ? Storage::disk($media_exists->file_disk)->path($media_exists->file_path) : false;
-        
+        return media($media)->path();
     }
 }
 function media_capture(){
@@ -276,9 +271,17 @@ if (!function_exists('url_capture')) {
 if (!function_exists('media_caching')) {
     function media_caching()
     {
-        foreach (\Leazycms\FLC\Models\File::select('file_path', 'file_name', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host')->get() as $row) {
+        $cacheKey = "media";
+        if(config('modules.multisite_enabled')){
+            $cacheKey .= ":".tenant()->id;
+            $query = \Leazycms\FLC\Models\File::select('file_path', 'file_name', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host')->where('host',tenant()->domain)->get();
+        }else{
+            $query = \Leazycms\FLC\Models\File::select('file_path', 'file_name', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host')->get();
+        }
+        
+        foreach ($query as $row) {
             if (Storage::disk($row->file_disk)->exists($row->file_path)) {
-                Cache::rememberForever("media_{$row->file_name}",function () use ($row) {
+                Cache::rememberForever("media:{$row->file_name}",function () use ($row) {
                     return [
                         'file_path' => $row->file_path,
                         'file_type' => $row->file_type,
@@ -291,7 +294,7 @@ if (!function_exists('media_caching')) {
                 });
             }
         }
-        Cache::rememberForever("media", function () {
+        Cache::rememberForever($cacheKey, function () {
             return true;
         });
     }
@@ -407,19 +410,15 @@ if (!function_exists('media_viewer')) {
     }
 }
 if (!function_exists('media_size')) {
-    function media_size($fileName)
+    function media_size(string $fileName)
     {
-        $file = json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($fileName))));
-        if ($file && Storage::disk($file->file_disk)->exists($file->file_path)) {
-            return size_as_kb(Storage::size($file->file_path));
-        }
-        return null;
+        return media($fileName)->size();
     }
 }
 if (!function_exists('flc_file_to_path')) {
-    function flc_file_to_path($fileName)
+    function flc_file_to_path(string $fileName)
     {
-        $file = json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media_" . basename($fileName))))?->file_path;
+        $file = json_decode(json_encode(\Illuminate\Support\Facades\Cache::get("media:" . basename($fileName))))?->file_path;
         if ($file) {
             return Storage::path($file);
         }

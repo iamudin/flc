@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
+use Illuminate\Support\Facades\Auth;
 use Leazycms\FLC\Models\File;
 
 
@@ -65,7 +66,7 @@ trait Fileable
         }else{
             $file = $this->files()->create($data);
         }
-        Cache::rememberForever("media_{$file->file_name}", function () use ($file) {
+        Cache::rememberForever("media:{$file->file_name}", function () use ($file) {
             return [
                 'file_path' => $file->file_path,
                 'file_type' => $file->file_type,
@@ -131,10 +132,10 @@ catch(\Exception $e){
                 'url' => request()->fullUrl(),
             ]);
         }
-        Log::channel('daily')->warning('File uploaded: '.url('/media/'.$finalFileName), [
+        Log::channel('daily')->warning('File uploaded: '.url("media:{$finalFileName}"), [
             'path' => $path,
             'ip' => get_client_ip(),
-            'user_id' => auth()?->user()->email,
+            'user_id' => Auth::user()->email,
             'url' => request()->fullUrl(),
             'referer' => request()->headers->get('referer'),
 
@@ -143,10 +144,10 @@ catch(\Exception $e){
     }
 
 
-    public function removeFileByPurposeAndChild($purpose, $childId = null,$self_upload=false)
+    public function removeFileByPurposeAndChild(string $purpose, $childId = null,$self_upload=false)
     {
         if($self_upload){
-            $query = $this->where('purpose', $purpose);
+            $query = collect($this)->where('purpose', $purpose);
         }else{
             $query = $this->files()->where('purpose', $purpose);
 
@@ -157,11 +158,11 @@ catch(\Exception $e){
         }
         $existingFile = $query->first();
         if ($existingFile) {
-            Cache::forget('media_'.$existingFile->file_name);
+            Cache::forget('media:'.$existingFile->file_name);
             Log::channel('daily')->warning('File deleted: ' . $existingFile->file_name, [
                 'path' => $existingFile->file_path,
                 'ip' => get_client_ip(),
-                'user_id' => auth()?->user()->email,
+                'user_id' => Auth::user()->email,
                 'referer' => request()->headers->get('referer'),
             ]);
             $existingFile->deleteFile(); // Menghapus file dari storage dan record dari database
