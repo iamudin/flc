@@ -46,7 +46,7 @@ class MediaHandler
 
             // Cek media:{name} (format utama)
             $cached = Cache::get("media:" . $key);
-            
+
             if ($cached !== null) {
                 if (is_array($cached)) {
                     $this->data = json_decode(json_encode($cached));
@@ -62,7 +62,7 @@ class MediaHandler
                     ->first();
 
                 if ($file && Storage::disk($file->disk)->exists($file->file_path)) {
-                    $this->data = (object) [
+                    $this->data =  [
                         'file_path' => $file->file_path,
                         'file_type' => $file->file_type,
                         'file_host' => $file->host,
@@ -90,7 +90,7 @@ class MediaHandler
         if ($data && isset($data->file_size)) {
             return size_as_kb($data->file_size);
         }
-        
+
         return '0 KB';
     }
 
