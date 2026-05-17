@@ -23,6 +23,29 @@ class FileManagerController extends Controller implements HasMiddleware
         ];
     }
 
+    public function favicon(Request $request)
+    {
+            abort_if(!media_exists(get_option('favicon')), 404);
+
+            $media = media(get_option('favicon'))->getData();
+            if(config('modules.multisite_enabled') && file_exists(public_path('favicon.ico'))){
+                unlink(public_path('favicon.ico'));
+            }
+            return response()->stream(function () use ($media) {
+            $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
+            abort_if($stream === false, 404);
+            fpassthru($stream);
+            fclose($stream);
+        }, 200, [
+            'Content-Type' => $media->file_type,
+            'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
+            'Cache-Control' => 'public, max-age=31536000, immutable',
+            'Pragma' => 'public',
+            'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
+            'Accept-Ranges' => 'bytes',
+        ]);
+    }
+
     public function upload(Request $request)
     {
 
@@ -69,7 +92,7 @@ XML;
 
             File::whereFileName($slug)->increment('file_hits');
             $media = media($slug)->getData();
-            
+
             if (!$media || (isset($media->file_host) && request()->getHost() != $media->file_host)) {
                 $requestId = Str::uuid();
                 $hostId = base64_encode(Str::random(32));
@@ -160,7 +183,7 @@ XML;
         // ambil file dari storage
         $slug = dec64(dec64($slug));
         $media = media($slug)->getData();
-        
+
         if (!$media || (isset($media->file_host) && request()->getHost() != $media->file_host)) {
             $requestId = Str::uuid();
             $hostId = base64_encode(Str::random(32));
@@ -213,7 +236,7 @@ XML;
     public function stream_by_id(string $slug)
     {
         $media = media($slug)->getData();
-        
+
         if (!$media || (isset($media->file_host) && request()->getHost() != $media->file_host)) {
             $requestId = Str::uuid();
             $hostId = base64_encode(Str::random(32));

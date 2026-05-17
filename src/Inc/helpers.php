@@ -36,6 +36,7 @@ function getMimeTypeByExtension(string $filename) {
 
         // Gambar
         'jpg'  => 'image/jpeg',
+        'ico'  => 'image/x-icon',
         'jpeg' => 'image/jpeg',
         'png'  => 'image/png',
         'gif'  => 'image/gif',
@@ -153,7 +154,7 @@ if (!function_exists('allow_mime')) {
 
     function allow_mime()
     {
-        return 'audio/mpeg,application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,video/mp4,image/gif,image/webp';
+        return 'audio/mpeg,application/x-zip-compressed,application/zip,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,video/mp4,image/gif,image/webp,image/x-icon,image/vnd.microsoft.icon';
     }
 }
 
@@ -278,7 +279,7 @@ if (!function_exists('media_caching')) {
         }else{
             $query = \Leazycms\FLC\Models\File::select('file_path', 'file_name', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host')->get();
         }
-        
+
         foreach ($query as $row) {
             if (Storage::disk($row->file_disk)->exists($row->file_path)) {
                 Cache::rememberForever("media:{$row->file_name}",function () use ($row) {
@@ -303,7 +304,7 @@ if (!function_exists('media_caching')) {
 if (!function_exists('flc_ext')) {
     function flc_ext()
     {
-        return ['jpg', 'jpeg', 'gif', 'zip', 'rar', 'doc', 'docx', 'pdf', 'xls', 'xlsx', 'png', 'webp', 'mp4','mp3'];
+        return ['jpg', 'jpeg', 'gif', 'zip', 'rar', 'doc', 'docx', 'pdf', 'xls', 'xlsx', 'png', 'webp', 'mp4','mp3','ico'];
     }
 }
 
@@ -335,9 +336,9 @@ if (!function_exists('media_viewer')) {
             $officeUrl = "https://view.officeapps.live.com/op/embed.aspx?src=" . urlencode(url($media));
 
             return "
-            <iframe 
+            <iframe
                 src='{$officeUrl}'
-                width='100%' 
+                width='100%'
                 height='{$height}'
                 style='border:none;'>
             </iframe>
@@ -354,10 +355,10 @@ if (!function_exists('media_viewer')) {
                     Memuat preview...
                 </div>
 
-                <iframe 
+                <iframe
                     id='{$id}_iframe'
                     src=''
-                    width='100%' 
+                    width='100%'
                     height='{$height}'
                     style='border:none; display:none;'>
                 </iframe>

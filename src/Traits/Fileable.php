@@ -106,7 +106,7 @@ catch(\Exception $e){
         }
         // Cek apakah file adalah gambar
         try {
-            if (str_starts_with($file->getMimeType(), 'image/') && strpos($file->getMimeType(), 'gif') === false) {
+            if (str_starts_with($file->getMimeType(), 'image/') && strpos($file->getMimeType(), 'gif') === false && strpos($file->getMimeType(), 'icon') === false) {
 
                 // Kompres gambar menggunakan Intervention Image
             $image = Image::make($file);
