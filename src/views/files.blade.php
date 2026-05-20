@@ -19,13 +19,13 @@
             <tr>
                 <td align="center">{{ $loop->iteration + ($data->currentPage() - 1) * $data->perPage() }}</td>
                 <td>{{ $item->created_at->format('d-m-y H:i T') }}</td>
-                <td><b class="text-primary">{{ $item->file_name}}</b><br><small class="text-muted"><i class="fa fa-user"></i> {{ $item->user?->name }}</small></td>
+                <td><b class="text-primary">{{ $item->file_name}}</b><br><small class="text-muted"><i class="fa fa-user"></i> {{ $item->user?->name }} <br><i class="fa fa-globe"></i> {{ $item->host }}</small></td>
                 <td>{{ size_as_kb($item->file_size)}}</td>
 
                 <td width="70px">
                     <div class="btn-group">
-                    <button data-copy="{{ route('stream',$item->file_name) }}" class="copy btn btn-sm btn-warning fa fa-link "></button>
-                    <span data-media="{{ route('stream',$item->file_name) }}" data-ext="{{ str(media_extension($item->file_name))->lower() }}"  class="btn-view-media btn btn-sm btn-primary fa fa-eye"></span>
+                    <button data-copy="{{ 'http://'.$item->host.'/media/'.$item->file_name }}" class="copy btn btn-sm btn-warning fa fa-link "></button>
+                    <span data-media="{{ 'http://'.$item->host.'/media/'.$item->file_name }}" data-ext="{{ str(media_extension($item->file_name))->lower() }}"  class="btn-view-media btn btn-sm btn-primary fa fa-eye"></span>
                     <button onclick="lw_media_destroy('{{ $item->file_name }}')" href="" class="btn btn-sm btn-danger fa fa-trash-o"></button>
                 </div>
                 </td>
