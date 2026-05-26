@@ -270,18 +270,29 @@ if (!function_exists('url_capture')) {
     }
 }
 if (!function_exists('media_caching')) {
-    function media_caching()
+    function media_caching($host = null)
     {
         $cacheKey = "media";
-        if(config('modules.multisite_enabled')){
-            $cacheKey .= ":".tenant()->id;
-            $query = \Leazycms\FLC\Models\File::select('file_path', 'file_name', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host')->where('host',tenant()->domain)->get();
-        }else{
-            $query = \Leazycms\FLC\Models\File::select('file_path', 'file_name', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host')->get();
+        $query = \Leazycms\FLC\Models\File::select('file_path', 'file_name', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host', 'disk');
+
+        if (config('modules.multisite_enabled')) {
+            if (app()->has('tenant')) {
+                $cacheKey .= ":" . tenant()->id;
+                $query->where('host', tenant()->domain);
+            } elseif (!empty($host)) {
+                $cacheKey .= ":" . $host;
+                $query->where('host', $host);
+            } else {
+                $cacheKey .= ":all";
+            }
         }
 
+        $query = $query->get();
+
+        $cachedCount = 0;
         foreach ($query as $row) {
-            if (Storage::disk($row->file_disk)->exists($row->file_path)) {
+            $disk = $row->disk ?: config('filesystems.default');
+            if ($disk && Storage::disk($disk)->exists($row->file_path)) {
                 Cache::rememberForever("media:{$row->file_name}",function () use ($row) {
                     return [
                         'file_path' => $row->file_path,
@@ -290,14 +301,21 @@ if (!function_exists('media_caching')) {
                         'file_auth' => $row->file_auth,
                         'file_size' => $row->file_size,
                         'file_hits' => $row->file_hits,
-                        'file_disk' => $row->disk,
+                        'file_disk' => $row->disk ?: config('filesystems.default'),
                     ];
                 });
+                $cachedCount++;
             }
         }
         Cache::rememberForever($cacheKey, function () {
             return true;
         });
+
+        return [
+            'cache_key' => $cacheKey,
+            'total_rows' => $query->count(),
+            'cached' => $cachedCount,
+        ];
     }
 }
 
