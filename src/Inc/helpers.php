@@ -301,7 +301,7 @@ if (!function_exists('media_caching')) {
                         'file_auth' => $row->file_auth,
                         'file_size' => $row->file_size,
                         'file_hits' => $row->file_hits,
-                        'file_disk' => $row->disk ?: config('filesystems.default'),
+                        'file_disk' => $row->disk ? $row->disk : config('filesystems.default'),
                     ];
                 });
                 $cachedCount++;
