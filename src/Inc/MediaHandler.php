@@ -48,6 +48,12 @@ class MediaHandler
             $cached = Cache::get("media:" . $key);
 
             if ($cached !== null) {
+                if ($cached instanceof \__PHP_Incomplete_Class) {
+                    Cache::forget("media:{$key}");
+                    $cached = null;
+                } elseif (is_object($cached)) {
+                    $cached = json_decode(json_encode($cached), true);
+                }
                 if (is_array($cached)) {
                     $this->data = json_decode(json_encode($cached));
                 } else {
@@ -62,7 +68,7 @@ class MediaHandler
                     ->first();
 
                 if ($file && Storage::disk($file->disk)->exists($file->file_path)) {
-                    $this->data =  [
+                    $this->data = [
                         'file_path' => $file->file_path,
                         'file_type' => $file->file_type,
                         'file_host' => $file->host,
@@ -80,6 +86,12 @@ class MediaHandler
                 }
             }
         }
+        if ($this->data === false) {
+            return null;
+        }
+        if (is_array($this->data)) {
+            return json_decode(json_encode($this->data));
+        }
         return is_object($this->data) ? $this->data : null;
     }
 
@@ -87,8 +99,32 @@ class MediaHandler
     {
         if ($this->media === null) return '0 KB';
         $data = $this->loadData();
-        if ($data && isset($data->file_size)) {
-            return size_as_kb($data->file_size);
+        if ($data && isset($data->file_size) && $data->file_size !== null) {
+            if (is_numeric($data->file_size) && (int) $data->file_size > 0) {
+                return size_as_kb((int) $data->file_size);
+            }
+        }
+
+        if ($data && isset($data->file_disk) && isset($data->file_path)) {
+            try {
+                if (Storage::disk($data->file_disk)->exists($data->file_path)) {
+                    $size = Storage::disk($data->file_disk)->size($data->file_path);
+                    if (is_numeric($size)) {
+                        $size = (int) $size;
+                        if ($size > 0) {
+                            $key = basename($this->media);
+                            $cacheData = is_object($data) ? (array) $data : (is_array($data) ? $data : []);
+                            $cacheData['file_size'] = $size;
+                            Cache::forever("media:{$key}", $cacheData);
+                            $this->data = $cacheData;
+                            \Leazycms\FLC\Models\File::whereFileName($key)
+                                ->update(['file_size' => $size]);
+                        }
+                        return size_as_kb($size);
+                    }
+                }
+            } catch (\Throwable $e) {
+            }
         }
 
         return '0 KB';
@@ -108,7 +144,7 @@ class MediaHandler
         if ($this->media === null) return false;
         if ($this->exists === null) {
             $data = $this->loadData();
-            $this->exists = ($data && isset($data->file_path) && isset($data->file_disk));
+            $this->exists = (is_object($data) && !($data instanceof \__PHP_Incomplete_Class) && isset($data->file_path) && isset($data->file_disk));
         }
         return $this->exists;
     }

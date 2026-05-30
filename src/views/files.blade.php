@@ -20,7 +20,7 @@
                 <td align="center">{{ $loop->iteration + ($data->currentPage() - 1) * $data->perPage() }}</td>
                 <td>{{ $item->created_at->format('d-m-y H:i T') }}</td>
                 <td><b class="text-primary">{{ $item->file_name}}</b><br><small class="text-muted"><i class="fa fa-user"></i> {{ $item->user?->name }} <br><i class="fa fa-globe"></i> {{ $item->host }}</small></td>
-                <td>{{ size_as_kb($item->file_size)}}</td>
+                <td>{{ media_size($item->file_name) }}</td>
 
                 <td width="70px">
                     <div class="btn-group">
