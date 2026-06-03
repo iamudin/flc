@@ -301,6 +301,7 @@ if (!function_exists('media_caching')) {
                         'file_auth' => $row->file_auth,
                         'file_size' => $row->file_size,
                         'file_hits' => $row->file_hits,
+                        'encrypt_key' => $row->encrypt_key,
                         'file_disk' => $row->disk ? $row->disk : config('filesystems.default'),
                     ];
                 });
@@ -427,6 +428,48 @@ if (!function_exists('media_viewer')) {
         </div>
         ";
     }
+}
+if (!function_exists('encryptFile')) {
+function encryptData($key,$contents)
+{
+    $key = base64_decode(
+        str_replace('base64:', '', $key)
+    );
+
+    $iv = random_bytes(16);
+
+    $encrypted = openssl_encrypt(
+        $contents,
+        'AES-256-CBC',
+        $key,
+        OPENSSL_RAW_DATA,
+        $iv
+    );
+
+    return base64_encode($iv . $encrypted);
+}
+}
+if (!function_exists('decryptFile')) {
+function decryptData($key,$encryptedData)
+{
+    $key = base64_decode(
+        str_replace('base64:', '', $key)
+    );
+
+    $data = base64_decode($encryptedData);
+
+    $iv = substr($data, 0, 16);
+
+    $encrypted = substr($data, 16);
+
+    return openssl_decrypt(
+        $encrypted,
+        'AES-256-CBC',
+        $key,
+        OPENSSL_RAW_DATA,
+        $iv
+    );
+}
 }
 if (!function_exists('media_size')) {
     function media_size(string $fileName)

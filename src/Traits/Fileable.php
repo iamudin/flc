@@ -33,6 +33,7 @@ trait Fileable
         $width = isset($source['width']) && is_numeric($source['width']) ? $source['width'] : null;
         $height = isset($source['height']) && is_numeric($source['height']) ? $source['height'] : null;
         $self_upload = isset($source['self_upload']) ? true : false;
+        $is_encrypt = !empty($source['is_encrypt']);
         if($file===null && $purpose===null && $mime===null){
             return null;
         }
@@ -43,17 +44,19 @@ trait Fileable
         }
         try{
         $this->removeFileByPurposeAndChild($purpose, $childId,$self_upload);
-        $upload = $this->handleFileUpload($file,$width,$height);
+        $upload = $this->handleFileUpload($file,$width,$height,$is_encrypt);
         $mimeType = $file->getMimeType();
+        $disk = config('filesystems.default');
         $data = [
             'user_id' => auth()?->id(),
             'file_path' => $upload->path,
             'file_type' => $mimeType,
             'file_auth' => $auth,
             'file_name' => $upload->name,
-            'file_size' => Storage::size($upload->path),
+            'encrypt_key' => $upload->encrypt_key ?? null,
+            'file_size' => Storage::disk($disk)->size($upload->path),
             'purpose' => $purpose,
-            'disk' => config('filesystems.default'),
+            'disk' => $disk,
             'host' => app()->has('tenant') && isset($this->tenant_id) !== tenant()->id ? $this->tenant->domain ?? request()->getHost() : request()->getHost(),
             'child_id' => $childId,
         ];
@@ -75,6 +78,7 @@ trait Fileable
                 'file_size' => $file->file_size,
                 'file_hits' => $file->file_hits,
                 'file_disk' => $file->disk,
+                'encrypt_key' => $file->encrypt_key,
             ];
         });
         return '/media/'.$upload->name;
@@ -87,7 +91,7 @@ catch(\Exception $e){
     ]);
 }
     }
-    private function handleFileUpload($file,$width=null,$height=null)
+    private function handleFileUpload($file,$width=null,$height=null,$shouldEncrypt=false)
     {
 
         $host = app()->has('tenant') && isset($this->tenant_id) !== tenant()->id ? $this->tenant->domain ?? request()->getHost() : request()->getHost();
@@ -103,6 +107,15 @@ catch(\Exception $e){
 
             // MIME type tidak diizinkan, jangan lakukan apa-apa dan kembalikan null
             return null;
+        }
+        $disk = config('filesystems.default');
+        $masterKey = config('flc.encrypt_key');
+        $shouldEncrypt = $shouldEncrypt && is_string($masterKey) && trim((string) $masterKey) !== '';
+        $encryptedKeyForDb = null;
+        $fileKey = null;
+        if ($shouldEncrypt) {
+            $fileKey = 'base64:' . base64_encode(random_bytes(32));
+            $encryptedKeyForDb = encryptData($masterKey, $fileKey);
         }
         // Cek apakah file adalah gambar
         try {
@@ -120,10 +133,20 @@ catch(\Exception $e){
                 $path = $directory . '/' . $finalFileName;
                 // Simpan gambar dalam format WebP
                 $imageData = (string) $image->encode('webp', 95); // kualitas 80
-                Storage::put($path, $imageData);
+                if ($shouldEncrypt) {
+                    $imageData = encryptData($fileKey, $imageData);
+                }
+                Storage::disk($disk)->put($path, $imageData);
             } else {
-                $path = $file->storeAs($directory, $fileName);
+                $path = $directory . '/' . $fileName;
                 $finalFileName = $fileName;
+                if ($shouldEncrypt) {
+                    $contents = file_get_contents($file->getRealPath());
+                    $contents = encryptData($fileKey, $contents);
+                    Storage::disk($disk)->put($path, $contents);
+                } else {
+                    $path = $file->storeAs($directory, $fileName, $disk);
+                }
         }
         } catch (\Exception $e) {
             Log::channel('daily')->error('File upload error: ' . $e->getMessage(), [
@@ -140,7 +163,7 @@ catch(\Exception $e){
             'referer' => request()->headers->get('referer'),
 
         ]);
-        return json_decode(json_encode(['path'=>$path,'name'=>$finalFileName]));
+        return json_decode(json_encode(['path'=>$path,'name'=>$finalFileName,'encrypt_key'=>$encryptedKeyForDb]));
     }
 
 

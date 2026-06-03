@@ -63,7 +63,7 @@ class MediaHandler
 
             // Jika tidak ada di cache (bernilai null), baru cek database
             if ($this->data === null) {
-                $file = \Leazycms\FLC\Models\File::select('file_path', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host', 'disk')
+                $file = \Leazycms\FLC\Models\File::select('file_path', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host', 'disk', 'encrypt_key')
                     ->whereFileName($key)
                     ->first();
 
@@ -76,6 +76,7 @@ class MediaHandler
                         'file_size' => $file->file_size,
                         'file_hits' => $file->file_hits,
                         'file_disk' => $file->disk,
+                        'encrypt_key' => $file->encrypt_key,
                     ];
                     Cache::forever("media:{$key}", $this->data);
                 } else {
@@ -118,6 +119,8 @@ class MediaHandler
                             Cache::forever("media:{$key}", $cacheData);
                             $this->data = $cacheData;
                             \Leazycms\FLC\Models\File::whereFileName($key)
+                                ->where('file_path', $cacheData['file_path'] ?? null)
+                                ->where('disk', $cacheData['file_disk'] ?? null)
                                 ->update(['file_size' => $size]);
                         }
                         return size_as_kb($size);
