@@ -96,11 +96,11 @@ catch(\Exception $e){
 
         $host = app()->has('tenant') && isset($this->tenant_id) !== tenant()->id ? $this->tenant->domain ?? request()->getHost() : request()->getHost();
         $directory =  (config('flc.disk_directory') ? config('flc.disk_directory').'/' : $host.'/').Carbon::now()->format('Y/m/d');
-        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $sluggedName = str($originalName)->slug();
+        $originalName =pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $sluggedName = str( substr($originalName,0,70))->slug();
         $extension = str($file->getClientOriginalExtension())->lower();
-        $fileName = $sluggedName.'.' . $file->getClientOriginalExtension();
-        if(File::whereFileName($sluggedName.'.' . $extension)->exists()){
+        $fileName = $sluggedName.'.' . $extension;
+        if(File::whereFileName($fileName)->exists()){
             $fileName = $sluggedName . '-' . str(str()->random(4))->lower() . '.' . $extension;
         }
         if (!in_array($extension,flc_ext())) {
@@ -155,7 +155,7 @@ catch(\Exception $e){
                 'url' => request()->fullUrl(),
             ]);
         }
-        Log::channel('daily')->warning('File uploaded: '.url("media:{$finalFileName}"), [
+        Log::channel('daily')->warning('File uploaded: '.url("media/{$finalFileName}"), [
             'path' => $path,
             'ip' => get_client_ip(),
             'user_id' => Auth::user()->email,
