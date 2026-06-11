@@ -167,7 +167,7 @@ catch(\Exception $e){
     }
 
 
-    public function removeFileByPurposeAndChild(string $purpose, $childId = null,$self_upload=false)
+    public function removeFileByPurposeAndChild($purpose, $childId = null,$self_upload=false)
     {
         if($self_upload){
             $query = collect($this)->where('purpose', $purpose);
