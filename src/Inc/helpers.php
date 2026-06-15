@@ -366,6 +366,10 @@ if (!function_exists('media_viewer')) {
 
         // === PDF / DEFAULT (Google Viewer + fallback) ===
         if (in_array($ext, $pdfExt)) {
+            $pdfUrl = e($fileUrl);
+            $pdfPreviewUrl = !is_local()
+                ? 'https://docs.google.com/gview?url=' . urlencode($fileUrl) . '&embedded=true'
+                : $fileUrl;
 
             return "
             <div id='{$id}_wrapper' style='width:100%;'>
@@ -392,9 +396,9 @@ if (!function_exists('media_viewer')) {
                 let loaded = false;
                 let switched = false;
 
-                const googleUrl = 'https://docs.google.com/gview?url=' + encodeURIComponent('{$fileUrl}') + '&embedded=true';
+                const previewUrl = '{$pdfPreviewUrl}';
 
-                iframe.src = googleUrl;
+                iframe.src = previewUrl;
 
                 iframe.onload = function () {
                     if (!switched) {
@@ -409,12 +413,12 @@ if (!function_exists('media_viewer')) {
                         switched = true;
 
                         // fallback ke file langsung
-                        iframe.src = '{$fileUrl}';
+                        iframe.src = '{$pdfUrl}';
 
                         loading.style.display = 'none';
                         iframe.style.display = 'block';
                     }
-                }, 6000);
+                }, " . (!is_local() ? "6000" : "0") . ");
 
             })();
             </script>
