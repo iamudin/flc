@@ -8,21 +8,24 @@ use Illuminate\Support\Facades\Storage;
 class MediaHandler
 {
     protected $media;
+    protected $host;
     protected $data = null;
     protected $exists = null;
     protected static $instances = [];
 
-    public function __construct($media)
+    public function __construct($media, $host = null)
     {
         $this->media = $media;
+        $this->host = $host ?? get_current_host();
     }
 
-    public static function getInstance($media)
+    public static function getInstance($media, $host = null)
     {
-        if (empty($media)) return new self(null);
-        $key = basename($media);
+        if (empty($media)) return new self(null, $host);
+        $instanceHost = $host ?? get_current_host();
+        $key = $instanceHost . ":" . basename($media);
         if (!isset(self::$instances[$key])) {
-            self::$instances[$key] = new self($media);
+            self::$instances[$key] = new self($media, $host);
         }
         return self::$instances[$key];
     }
@@ -45,11 +48,12 @@ class MediaHandler
             }
 
             // Cek media:{name} (format utama)
-            $cached = Cache::get(get_current_host().":media:" . $key);
+            $cacheKey = $this->host . ":media:" . $key;
+            $cached = Cache::get($cacheKey);
 
             if ($cached !== null) {
                 if ($cached instanceof \__PHP_Incomplete_Class) {
-                    Cache::forget(get_current_host().":media:{$key}");
+                    Cache::forget($this->host . ":media:{$key}");
                     $cached = null;
                 } elseif (is_object($cached)) {
                     $cached = json_decode(json_encode($cached), true);
@@ -65,6 +69,7 @@ class MediaHandler
             if ($this->data === null) {
                 $file = \Leazycms\FLC\Models\File::select('file_path', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host', 'disk', 'encrypt_key')
                     ->whereFileName($key)
+                    ->where('host', $this->host)
                     ->first();
 
                 if ($file && Storage::disk($file->disk)->exists($file->file_path)) {
@@ -78,12 +83,12 @@ class MediaHandler
                         'file_disk' => $file->disk,
                         'encrypt_key' => $file->encrypt_key,
                     ];
-                    Cache::forever(get_current_host().":media:{$key}", $this->data);
+                    Cache::forever($cacheKey, $this->data);
                 } else {
                     // Tandai sebagai false agar tidak query berulang jika file tidak ada
                     $this->data = false;
                     // Cache juga status "tidak ada" ini selama 1 jam agar tidak hit DB terus-menerus
-                    Cache::put(get_current_host().":media:{$key}", false, now()->addHour());
+                    Cache::put($cacheKey, false, now()->addHour());
                 }
             }
         }
@@ -116,11 +121,13 @@ class MediaHandler
                             $key = basename($this->media);
                             $cacheData = is_object($data) ? (array) $data : (is_array($data) ? $data : []);
                             $cacheData['file_size'] = $size;
-                            Cache::forever(get_current_host().":media:{$key}", $cacheData);
+                            $cacheKey = $this->host . ":media:{$key}";
+                            Cache::forever($cacheKey, $cacheData);
                             $this->data = $cacheData;
                             \Leazycms\FLC\Models\File::whereFileName($key)
                                 ->where('file_path', $cacheData['file_path'] ?? null)
                                 ->where('disk', $cacheData['file_disk'] ?? null)
+                                ->where('host', $this->host)
                                 ->update(['file_size' => $size]);
                         }
                         return size_as_kb($size);

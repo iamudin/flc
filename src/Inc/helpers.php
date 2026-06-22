@@ -110,9 +110,9 @@ if (!function_exists('flc_comment_form')) {
 }
 
 if (!function_exists('media')) {
-    function media($media)
+    function media($media,$host=null)
     {
-        return \Leazycms\FLC\Inc\MediaHandler::getInstance($media);
+        return \Leazycms\FLC\Inc\MediaHandler::getInstance($media,$host);
     }
 }
 
