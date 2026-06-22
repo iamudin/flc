@@ -25,7 +25,7 @@ class File extends Model
         if( Storage::disk($this->disk)->exists($this->file_path)){
         Storage::disk($this->disk)->delete($this->file_path);
         }
-        Cache::forget('media:'.$this->file_name);
+        Cache::forget($this->host.':media:'.$this->file_name);
         $this->delete();
     }
 }

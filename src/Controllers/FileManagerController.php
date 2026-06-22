@@ -179,7 +179,7 @@ XML;
 
             if ($media) {
                 $media->file_hits = ($media->file_hits ?? 0) + 1;
-                Cache::forever("media:{$slug}", json_decode(json_encode($media), true));
+                Cache::forever($media->host.":media:{$slug}", json_decode(json_encode($media), true));
             }
 
             $key = md5(request()->session()->getId()) . "_" . $slug;
@@ -323,7 +323,7 @@ XML;
             $media = $request->media;
             $data = File::whereFileName(basename($media))->first();
             if ($data) {
-                Cache::forget("media:" . basename($media));
+                Cache::forget($data->host.":media:" . basename($media));
                 Storage::disk($data->disk)->delete($data->file_path);
                 Log::channel('daily')->warning('File deleted: ' . $data->file_name, [
                     'path' => $data->file_path,

@@ -270,20 +270,13 @@ if (!function_exists('url_capture')) {
     }
 }
 if (!function_exists('media_caching')) {
-    function media_caching($host = null)
+    function media_caching()
     {
-        $cacheKey = "media";
         $query = \Leazycms\FLC\Models\File::select('file_path', 'file_name', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host', 'disk');
 
         if (config('modules.multisite_enabled')) {
             if (app()->has('tenant')) {
-                $cacheKey .= ":" . tenant()->id;
                 $query->where('host', tenant()->domain);
-            } elseif (!empty($host)) {
-                $cacheKey .= ":" . $host;
-                $query->where('host', $host);
-            } else {
-                $cacheKey .= ":all";
             }
         }
 
@@ -293,7 +286,7 @@ if (!function_exists('media_caching')) {
         foreach ($query as $row) {
             $disk = $row->disk ?: config('filesystems.default');
             if ($disk && Storage::disk($disk)->exists($row->file_path)) {
-                Cache::rememberForever("media:{$row->file_name}",function () use ($row) {
+                Cache::rememberForever($row->host.":media:{$row->file_name}",function () use ($row) {
                     return [
                         'file_path' => $row->file_path,
                         'file_type' => $row->file_type,
@@ -308,12 +301,12 @@ if (!function_exists('media_caching')) {
                 $cachedCount++;
             }
         }
-        Cache::rememberForever($cacheKey, function () {
+        Cache::rememberForever(get_current_host().":media:all", function () {
             return true;
         });
 
         return [
-            'cache_key' => $cacheKey,
+            'cache_key' => get_current_host().":media:all",
             'total_rows' => $query->count(),
             'cached' => $cachedCount,
         ];

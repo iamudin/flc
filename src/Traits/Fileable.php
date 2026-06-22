@@ -69,7 +69,7 @@ trait Fileable
         }else{
             $file = $this->files()->create($data);
         }
-        Cache::rememberForever("media:{$file->file_name}", function () use ($file) {
+        Cache::rememberForever($file->host.":media:{$file->file_name}", function () use ($file) {
             return [
                 'file_path' => $file->file_path,
                 'file_type' => $file->file_type,
@@ -181,7 +181,7 @@ catch(\Exception $e){
         }
         $existingFile = $query->first();
         if ($existingFile) {
-            Cache::forget('media:'.$existingFile->file_name);
+            Cache::forget($existingFile->host.':media:'.$existingFile->file_name);
             Log::channel('daily')->warning('File deleted: ' . $existingFile->file_name, [
                 'path' => $existingFile->file_path,
                 'ip' => get_client_ip(),

@@ -45,11 +45,11 @@ class MediaHandler
             }
 
             // Cek media:{name} (format utama)
-            $cached = Cache::get("media:" . $key);
+            $cached = Cache::get(get_current_host().":media:" . $key);
 
             if ($cached !== null) {
                 if ($cached instanceof \__PHP_Incomplete_Class) {
-                    Cache::forget("media:{$key}");
+                    Cache::forget(get_current_host().":media:{$key}");
                     $cached = null;
                 } elseif (is_object($cached)) {
                     $cached = json_decode(json_encode($cached), true);
@@ -78,12 +78,12 @@ class MediaHandler
                         'file_disk' => $file->disk,
                         'encrypt_key' => $file->encrypt_key,
                     ];
-                    Cache::forever("media:{$key}", $this->data);
+                    Cache::forever(get_current_host().":media:{$key}", $this->data);
                 } else {
                     // Tandai sebagai false agar tidak query berulang jika file tidak ada
                     $this->data = false;
                     // Cache juga status "tidak ada" ini selama 1 jam agar tidak hit DB terus-menerus
-                    Cache::put("media:{$key}", false, now()->addHour());
+                    Cache::put(get_current_host().":media:{$key}", false, now()->addHour());
                 }
             }
         }
@@ -116,7 +116,7 @@ class MediaHandler
                             $key = basename($this->media);
                             $cacheData = is_object($data) ? (array) $data : (is_array($data) ? $data : []);
                             $cacheData['file_size'] = $size;
-                            Cache::forever("media:{$key}", $cacheData);
+                            Cache::forever(get_current_host().":media:{$key}", $cacheData);
                             $this->data = $cacheData;
                             \Leazycms\FLC\Models\File::whereFileName($key)
                                 ->where('file_path', $cacheData['file_path'] ?? null)
