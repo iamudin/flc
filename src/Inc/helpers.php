@@ -426,7 +426,7 @@ if (!function_exists('media_viewer')) {
         ";
     }
 }
-if (!function_exists('encryptFile')) {
+if (!function_exists('encryptData')) {
 function encryptData($key,$contents)
 {
     $key = base64_decode(
@@ -446,7 +446,7 @@ function encryptData($key,$contents)
     return base64_encode($iv . $encrypted);
 }
 }
-if (!function_exists('decryptFile')) {
+if (!function_exists('decryptData')) {
 function decryptData($key,$encryptedData)
 {
     $key = base64_decode(
