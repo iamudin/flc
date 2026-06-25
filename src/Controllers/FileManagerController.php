@@ -179,10 +179,10 @@ XML;
 
             if ($media) {
                 $media->file_hits = ($media->file_hits ?? 0) + 1;
-                Cache::forever($media->host.":media:{$slug}", json_decode(json_encode($media), true));
+                Cache::forever($media->file_host.":media:{$slug}", json_decode(json_encode($media), true));
             }
 
-            $key = md5(request()->session()->getId()) . "_" . $slug;
+            $key = md5($slug) . "_" . $slug;
             $masterKey = config('flc.encrypt_key');
             $shouldDecrypt = is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key);
             if ($shouldDecrypt) {

@@ -220,4 +220,108 @@ class MediaHandler
         }
         return false;
     }
+
+    public function embed($height = 600)
+    {
+        $id = 'viewer_' . md5($this->media . uniqid());
+        $fileUrl = $this->stream() ?? $this->media;
+
+        $ext = strtolower(pathinfo($this->media, PATHINFO_EXTENSION));
+
+        // === TYPE DETECTION ===
+        $imageExt = ['jpg','jpeg','png','gif','webp'];
+        $officeExt = ['doc','docx','xls','xlsx','ppt','pptx'];
+        $pdfExt = ['pdf'];
+
+        // === IMAGE ===
+        if (in_array($ext, $imageExt)) {
+            return "
+            <div style='text-align:center;'>
+                <img src='{$fileUrl}' style='max-width:100%; height:auto;' />
+            </div>
+            ";
+        }
+
+        // === OFFICE FILE (Microsoft Viewer) ===
+        if (in_array($ext, $officeExt)) {
+            $officeUrl = "https://view.officeapps.live.com/op/embed.aspx?src=" . urlencode(url($this->media));
+
+            return "
+            <iframe
+                src='{$officeUrl}'
+                width='100%'
+                height='{$height}'
+                style='border:none;'>
+            </iframe>
+            ";
+        }
+
+        // === PDF / DEFAULT (Google Viewer + fallback) ===
+        if (in_array($ext, $pdfExt)) {
+            $pdfUrl = e($fileUrl);
+            $pdfPreviewUrl = !is_local()
+                ? 'https://docs.google.com/gview?url=' . urlencode($fileUrl) . '&embedded=true'
+                : $fileUrl;
+
+            return "
+            <div id='{$id}_wrapper' style='width:100%;'>
+
+                <div id='{$id}_loading' style='text-align:center; padding:20px;'>
+                    Memuat preview...
+                </div>
+
+                <iframe
+                    id='{$id}_iframe'
+                    src=''
+                    width='100%'
+                    height='{$height}'
+                    style='border:none; display:none;'>
+                </iframe>
+
+            </div>
+
+            <script>
+            (function(){
+                const iframe = document.getElementById('{$id}_iframe');
+                const loading = document.getElementById('{$id}_loading');
+
+                let loaded = false;
+                let switched = false;
+
+                const previewUrl = '{$pdfPreviewUrl}';
+
+                iframe.src = previewUrl;
+
+                iframe.onload = function () {
+                    if (!switched) {
+                        loaded = true;
+                        loading.style.display = 'none';
+                        iframe.style.display = 'block';
+                    }
+                };
+
+                setTimeout(function () {
+                    if (!loaded) {
+                        switched = true;
+
+                        // fallback ke file langsung
+                        iframe.src = '{$pdfUrl}';
+
+                        loading.style.display = 'none';
+                        iframe.style.display = 'block';
+                    }
+                }, " . (!is_local() ? "6000" : "0") . ");
+
+            })();
+            </script>
+            ";
+        }
+
+        // === DEFAULT (tidak bisa preview) ===
+        return "
+        <div style='text-align:center; padding:20px;'>
+            <p>Preview file tidak tersedia.</p>
+        </div>
+        ";
+    }
 }
