@@ -70,35 +70,35 @@ HTML;
 
     public function favicon(Request $request)
     {
-            abort_if(!media_exists(get_option('favicon')), 404);
+        abort_if(!media_exists(get_option('favicon')), 404);
 
-            $media = media(get_option('favicon'))->getData();
-            if(config('modules.multisite_enabled') && file_exists(public_path('favicon.ico'))){
-                unlink(public_path('favicon.ico'));
-            }
-            $masterKey = config('flc.encrypt_key');
-            $shouldDecrypt = is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key);
-            if ($shouldDecrypt) {
-                if (!Auth::check()) {
-                    return $this->privacyResponse();
-                }
-                return response()->stream(function () use ($media) {
-                    $raw = Storage::disk($media->file_disk)->get($media->file_path);
-                    $masterKey = config('flc.encrypt_key');
-                    $fileKey = decryptData($masterKey, $media->encrypt_key);
-                    $decrypted = is_string($fileKey) && $fileKey !== '' ? decryptData($fileKey, $raw) : false;
-                    abort_if(!is_string($decrypted) || $decrypted === '', 500, 'File tidak dapat didecrypt');
-                    echo $decrypted;
-                }, 200, [
-                    'Content-Type' => $media->file_type,
-                    'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
-                    'Cache-Control' => 'public, max-age=31536000, immutable',
-                    'Pragma' => 'public',
-                    'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
-                    'Accept-Ranges' => 'bytes',
-                ]);
+        $media = media(get_option('favicon'))->getData();
+        if (config('modules.multisite_enabled') && file_exists(public_path('favicon.ico'))) {
+            unlink(public_path('favicon.ico'));
+        }
+        $masterKey = config('flc.encrypt_key');
+        $shouldDecrypt = is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key);
+        if ($shouldDecrypt) {
+            if (!Auth::check()) {
+                return $this->privacyResponse();
             }
             return response()->stream(function () use ($media) {
+                $raw = Storage::disk($media->file_disk)->get($media->file_path);
+                $masterKey = config('flc.encrypt_key');
+                $fileKey = decryptData($masterKey, $media->encrypt_key);
+                $decrypted = is_string($fileKey) && $fileKey !== '' ? decryptData($fileKey, $raw) : false;
+                abort_if(!is_string($decrypted) || $decrypted === '', 500, 'File tidak dapat didecrypt');
+                echo $decrypted;
+            }, 200, [
+                'Content-Type' => $media->file_type,
+                'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
+                'Cache-Control' => 'public, max-age=31536000, immutable',
+                'Pragma' => 'public',
+                'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
+                'Accept-Ranges' => 'bytes',
+            ]);
+        }
+        return response()->stream(function () use ($media) {
             $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
             abort_if($stream === false, 404);
             fpassthru($stream);
@@ -179,7 +179,7 @@ XML;
 
             if ($media) {
                 $media->file_hits = ($media->file_hits ?? 0) + 1;
-                Cache::forever($media->file_host.":media:{$slug}", json_decode(json_encode($media), true));
+                Cache::forever($media->file_host . ":media:{$slug}", json_decode(json_encode($media), true));
             }
 
             $key = md5($slug) . "_" . $slug;
@@ -210,7 +210,7 @@ XML;
 
         if ($referer) {
             $allowedDomains = [
-                parse_url(config('app.url'), PHP_URL_HOST), // domain web kamu
+                parse_url(get_current_host(), PHP_URL_HOST), // domain web kamu
                 'drive.google.com',                          // Google Docs Viewer
             ];
 
@@ -323,7 +323,7 @@ XML;
             $media = $request->media;
             $data = File::whereFileName(basename($media))->first();
             if ($data) {
-                Cache::forget($data->host.":media:" . basename($media));
+                Cache::forget($data->host . ":media:" . basename($media));
                 Storage::disk($data->disk)->delete($data->file_path);
                 Log::channel('daily')->warning('File deleted: ' . $data->file_name, [
                     'path' => $data->file_path,

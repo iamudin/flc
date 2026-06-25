@@ -229,15 +229,15 @@ class MediaHandler
         $ext = strtolower(pathinfo($this->media, PATHINFO_EXTENSION));
 
         // === TYPE DETECTION ===
-        $imageExt = ['jpg','jpeg','png','gif','webp'];
-        $officeExt = ['doc','docx','xls','xlsx','ppt','pptx'];
+        $imageExt = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $officeExt = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
         $pdfExt = ['pdf'];
 
         // === IMAGE ===
         if (in_array($ext, $imageExt)) {
             return "
             <div style='text-align:center;'>
-                <img src='{$fileUrl}' style='max-width:100%; height:auto;' />
+                <img src='{$fileUrl}' style='width:100%; height:auto;' />
             </div>
             ";
         }
