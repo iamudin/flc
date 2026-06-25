@@ -158,7 +158,9 @@ XML;
             }
 
             File::whereFileName($slug)->increment('file_hits');
-            $media = media($slug)->getData();
+            // Forget cache & buat instance baru agar getData() membaca file_hits terbaru dari DB
+            Cache::forget(request()->getHost() . ":media:{$slug}");
+            $media = (new \Leazycms\FLC\Inc\MediaHandler($slug))->getData();
 
             if (!$media || (isset($media->file_host) && request()->getHost() != $media->file_host)) {
                 $requestId = Str::uuid();
@@ -175,11 +177,6 @@ XML;
 </Error>
 XML;
                 return response($xml, 404)->header('Content-Type', 'application/xml');
-            }
-
-            if ($media) {
-                $media->file_hits = ($media->file_hits ?? 0) + 1;
-                Cache::forever($media->file_host . ":media:{$slug}", json_decode(json_encode($media), true));
             }
 
             $key = md5($slug) . "_" . $slug;

@@ -216,7 +216,7 @@ class MediaHandler
     public function download()
     {
         if ($this->isExists()) {
-            return route('media.download', [enc64(basename($this->media)), md5(session()->getId())]);
+            return route('media.download', [enc64(basename($this->media)), md5(session()->getId()) . '?time=' . now()]);
         }
         return false;
     }
