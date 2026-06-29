@@ -123,13 +123,15 @@ HTML;
 
         if ($file = $request->file('media')) {
 
-            if ((new File)->addFile([
-                'file' => $file,
-                'purpose' => 'Upload Media',
-                'child_id' => str()->random(6),
-                'mime_type' => explode(',', allow_mime()),
-                'self_upload' => true
-            ]) !== null) {
+            if (
+                (new File)->addFile([
+                    'file' => $file,
+                    'purpose' => 'Upload Media',
+                    'child_id' => str()->random(6),
+                    'mime_type' => explode(',', allow_mime()),
+                    'self_upload' => true
+                ]) !== null
+            ) {
                 return back()->with('success', 'File berhasil diupload');
             }
         }
@@ -163,20 +165,7 @@ XML;
             $media = (new \Leazycms\FLC\Inc\MediaHandler($slug))->getData();
 
             if (!$media || (isset($media->file_host) && request()->getHost() != $media->file_host)) {
-                $requestId = Str::uuid();
-                $hostId = base64_encode(Str::random(32));
-                $key = base64_encode(base64_encode($slug)) . '-' . md5(request()->session()->getId());
-                $xml = <<<XML
-<?xml version="1.0" encoding="UTF-8"?>
-<Error>
-  <Code>NoSuchKey</Code>
-  <Message>The specified key does not exist.</Message>
-  <Key>{$key}</Key>
-  <RequestId>{$requestId}</RequestId>
-  <HostId>{$hostId}</HostId>
-</Error>
-XML;
-                return response($xml, 404)->header('Content-Type', 'application/xml');
+                return $this->xmlNotFoundResponse(base64_encode(base64_encode($slug)) . '-' . md5(request()->session()->getId()));
             }
 
             $key = md5($slug) . "_" . $slug;
@@ -264,20 +253,7 @@ XML;
         $media = media($slug)->getData();
 
         if (!$media || (isset($media->file_host) && request()->getHost() != $media->file_host)) {
-            $requestId = Str::uuid();
-            $hostId = base64_encode(Str::random(32));
-            $key = base64_encode(base64_encode(md5(request()->session()->getId())));
-            $xml = <<<XML
-<?xml version="1.0" encoding="UTF-8"?>
-<Error>
-  <Code>NoSuchKey</Code>
-  <Message>The specified key does not exist.</Message>
-  <Key>{$key}</Key>
-  <RequestId>{$requestId}</RequestId>
-  <HostId>{$hostId}</HostId>
-</Error>
-XML;
-            return response($xml, 404)->header('Content-Type', 'application/xml');
+            return $this->xmlNotFoundResponse(base64_encode(base64_encode(md5(request()->session()->getId()))));
         }
 
         $masterKey = config('flc.encrypt_key');
@@ -404,7 +380,7 @@ XML;
             }
             return response()->stream(function () use ($media) {
                 $raw = Storage::disk($media->file_disk)->get($media->file_path);
-                $masterKey = env('ENCRYPTION_KEY');
+                $masterKey = config('flc.encrypt_key');
                 $fileKey = decryptData($masterKey, $media->encrypt_key);
                 $decrypted = is_string($fileKey) && $fileKey !== '' ? decryptData($fileKey, $raw) : false;
                 abort_if(!is_string($decrypted) || $decrypted === '', 500, 'File tidak dapat didecrypt');
@@ -431,5 +407,22 @@ XML;
             'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
             'Accept-Ranges' => 'bytes',
         ]);
+    }
+
+    private function xmlNotFoundResponse($key)
+    {
+        $requestId = \Illuminate\Support\Str::uuid();
+        $hostId = base64_encode(\Illuminate\Support\Str::random(32));
+        $xml = <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>NoSuchKey</Code>
+  <Message>The specified key does not exist.</Message>
+  <Key>{$key}</Key>
+  <RequestId>{$requestId}</RequestId>
+  <HostId>{$hostId}</HostId>
+</Error>
+XML;
+        return response($xml, 404)->header('Content-Type', 'application/xml');
     }
 }
