@@ -163,7 +163,7 @@ trait Fileable
         Log::channel('daily')->warning('File uploaded: ' . url("media/{$finalFileName}"), [
             'path' => $path,
             'ip' => get_client_ip(),
-            'user_id' => Auth::user()->email,
+            'user_id' => Auth::user()->email ?? null,
             'url' => request()->fullUrl(),
             'referer' => request()->headers->get('referer'),
 
@@ -190,7 +190,7 @@ trait Fileable
             Log::channel('daily')->warning('File deleted: ' . $existingFile->file_name, [
                 'path' => $existingFile->file_path,
                 'ip' => get_client_ip(),
-                'user_id' => Auth::user()->email,
+                'user_id' => Auth::user()->email ?? null,
                 'referer' => request()->headers->get('referer'),
             ]);
             $existingFile->deleteFile(); // Menghapus file dari storage dan record dari database

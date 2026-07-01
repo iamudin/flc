@@ -72,6 +72,14 @@ class MediaHandler
                     ->where('host', $this->host)
                     ->first();
 
+                // Fallback: Jika diakses dari custom domain plugin atau multisite disable, cari tanpa host
+                if (!$file) {
+                    $file = \Leazycms\FLC\Models\File::select('file_path', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host', 'disk', 'encrypt_key')
+                        ->whereFileName($key)
+                        ->first();
+                }
+
+
                 if ($file && Storage::disk($file->disk)->exists($file->file_path)) {
                     $this->data = [
                         'file_path' => $file->file_path,
