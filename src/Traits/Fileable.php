@@ -45,6 +45,7 @@ trait Fileable
             return null;
         }
         try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
             $this->removeFileByPurposeAndChild($purpose, $childId, $self_upload);
             $upload = $this->handleFileUpload($file, $width, $height, $is_encrypt, $random_name);
             $mimeType = $file->getMimeType();
@@ -67,29 +68,35 @@ trait Fileable
                 $data['fileable_id'] = 3;
                 $id = $this->insertGetId($data);
                 $this->whereId($id)->update(['fileable_id' => $id, 'created_at' => now()]);
-                $file = $this->find($id);
+                $fileModel = $this->find($id);
             } else {
-                $file = $this->files()->create($data);
+                $fileModel = $this->files()->create($data);
             }
-            Cache::rememberForever($file->host . ":media:{$file->file_name}", function () use ($file) {
+            Cache::rememberForever($fileModel->host . ":media:{$fileModel->file_name}", function () use ($fileModel) {
                 return [
-                    'file_path' => $file->file_path,
-                    'file_type' => $file->file_type,
-                    'file_host' => $file->host,
-                    'file_auth' => $file->file_auth,
-                    'file_size' => $file->file_size,
-                    'file_hits' => $file->file_hits,
-                    'file_disk' => $file->disk,
-                    'encrypt_key' => $file->encrypt_key,
+                    'file_path' => $fileModel->file_path,
+                    'file_type' => $fileModel->file_type,
+                    'file_host' => $fileModel->host,
+                    'file_auth' => $fileModel->file_auth,
+                    'file_size' => $fileModel->file_size,
+                    'file_hits' => $fileModel->file_hits,
+                    'file_disk' => $fileModel->disk,
+                    'encrypt_key' => $fileModel->encrypt_key,
                 ];
             });
+            \Illuminate\Support\Facades\DB::commit();
             return '/media/' . $upload->name;
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            if (isset($upload) && isset($upload->path)) {
+                Storage::disk(config('filesystems.default'))->delete($upload->path);
+            }
             Log::channel('daily')->error('File upload error: ' . $e->getMessage(), [
                 'info' => 'Error during file upload',
                 'ip' => get_client_ip(),
                 'url' => request()->fullUrl(),
             ]);
+            return null;
         }
     }
     private function handleFileUpload($file, $width = null, $height = null, $shouldEncrypt = false, $randomName = false)

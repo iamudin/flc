@@ -117,8 +117,16 @@ HTML;
     {
 
         abort_if(!$request->user() || !$request->isMethod('post'), '404');
+        $maxSizeBytes = \Illuminate\Http\UploadedFile::getMaxFilesize();
+        $maxSizeKB = $maxSizeBytes / 1024;
+        $maxSizeMB = floor($maxSizeKB / 1024);
+
         $request->validate([
-            'media' => 'required|mimetypes:' . allow_mime(),
+            'media' => 'required|mimetypes:' . allow_mime() . '|max:' . floor($maxSizeKB),
+        ], [
+            'media.max' => 'Ukuran file terlalu besar. Batas maksimal server adalah ' . $maxSizeMB . ' MB.',
+            'media.mimetypes' => 'Format file tidak diizinkan. Ekstensi yang diizinkan: ' . allow_mime(),
+            'media.required' => 'Tidak ada file yang dipilih atau file terlalu besar melebihi batas server.'
         ]);
 
         if ($file = $request->file('media')) {
@@ -164,9 +172,10 @@ HTML;
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Gagal mengupload file'
+                    'message' => 'Gagal mengupload file ke dalam sistem. Silakan periksa log atau hubungi administrator.'
                 ], 500);
             }
+            return back()->with('error', 'Gagal mengupload file ke dalam sistem.');
         }
     }
     public function download($slug, $session)
