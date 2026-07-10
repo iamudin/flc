@@ -122,17 +122,50 @@ HTML;
         ]);
 
         if ($file = $request->file('media')) {
+            $fileHash = md5_file($file->getRealPath());
+            
+            // Cek duplikasi menggunakan child_id sebagai penyimpan hash md5
+            $currentHost = app()->has('tenant') && function_exists('tenant') && tenant() ? tenant()->domain : $request->getHost();
+            
+            $existingFile = \Leazycms\FLC\Models\File::where('child_id', $fileHash)
+                                                     ->where('purpose', 'upload-media')
+                                                     ->where('host', $currentHost)
+                                                     ->first();
+                                                     
+            if ($existingFile) {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Duplikasi terdeteksi: File ini sudah pernah diunggah.'
+                    ], 400);
+                }
+                return back()->with('error', 'Duplikasi terdeteksi: File ini sudah pernah diunggah.');
+            }
 
-            if (
-                (new File)->addFile([
-                    'file' => $file,
-                    'purpose' => 'Upload Media',
-                    'child_id' => str()->random(6),
-                    'mime_type' => explode(',', allow_mime()),
-                    'self_upload' => true
-                ]) !== null
-            ) {
+            $fileName = (new File)->addFile([
+                'file' => $file,
+                'purpose' => 'Upload Media',
+                'child_id' => $fileHash,
+                'mime_type' => explode(',', allow_mime()),
+                'self_upload' => true
+            ]);
+
+            if ($fileName !== null) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'status' => 'success',
+                        'file_name' => $fileName,
+                        'message' => 'File berhasil diupload'
+                    ]);
+                }
                 return back()->with('success', 'File berhasil diupload');
+            }
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Gagal mengupload file'
+                ], 500);
             }
         }
     }
