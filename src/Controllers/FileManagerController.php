@@ -131,15 +131,15 @@ HTML;
 
         if ($file = $request->file('media')) {
             $fileHash = md5_file($file->getRealPath());
-            
+
             // Cek duplikasi menggunakan child_id sebagai penyimpan hash md5
             $currentHost = app()->has('tenant') && function_exists('tenant') && tenant() ? tenant()->domain : $request->getHost();
-            
+
             $existingFile = \Leazycms\FLC\Models\File::where('child_id', $fileHash)
-                                                     ->where('purpose', 'upload-media')
-                                                     ->where('host', $currentHost)
-                                                     ->first();
-                                                     
+                ->where('purpose', 'upload-media')
+                ->where('host', $currentHost)
+                ->first();
+
             if ($existingFile) {
                 if ($request->expectsJson() || $request->ajax()) {
                     return response()->json([
@@ -168,7 +168,7 @@ HTML;
                 }
                 return back()->with('success', 'File berhasil diupload');
             }
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'status' => 'error',
