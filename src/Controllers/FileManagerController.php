@@ -160,9 +160,11 @@ HTML;
 
             if ($fileName !== null) {
                 if ($request->ajax() || $request->wantsJson()) {
+                    $finalFile = File::where('file_name', $fileName)->first();
                     return response()->json([
                         'status' => 'success',
                         'file_name' => $fileName,
+                        'file_size' => $finalFile ? (int) $finalFile->file_size : 0,
                         'message' => 'File berhasil diupload'
                     ]);
                 }
@@ -336,9 +338,30 @@ XML;
         abort_if(!$request->user() || !$request->isMethod('post'), 404);
         if ($request->media) {
             $media = $request->media;
-            $data = File::whereFileName(basename($media))->first();
+            $fileName = basename($media);
+            $data = File::whereFileName($fileName)->first();
             if ($data) {
-                Cache::forget($data->host . ":media:" . basename($media));
+                $inUsePosts = \Leazycms\Web\Models\Post::where('media', 'LIKE', '%' . $fileName . '%')
+                    ->orWhere('content', 'LIKE', '%' . $fileName . '%')
+                    ->orWhere('data_field', 'LIKE', '%' . $fileName . '%')
+                    ->orWhere('data_loop', 'LIKE', '%' . $fileName . '%')
+                    ->exists();
+
+                $inUseOptions = \Leazycms\Web\Models\Option::where('value', 'LIKE', '%' . $fileName . '%')
+                    ->exists();
+
+                if ($inUsePosts || $inUseOptions) {
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'File tidak dapat dihapus karena sedang digunakan oleh post atau pengaturan lain.'
+                        ], 400);
+                    }
+                    return back()->with('error', 'File tidak dapat dihapus karena sedang digunakan oleh post atau pengaturan lain.');
+                }
+
+                $deletedSize = $data->file_size;
+                Cache::forget($data->host . ":media:" . $fileName);
                 Storage::disk($data->disk)->delete($data->file_path);
                 Log::channel('daily')->warning('File deleted: ' . $data->file_name, [
                     'path' => $data->file_path,
@@ -347,7 +370,15 @@ XML;
                     'referer' => request()->headers->get('referer'),
                 ]);
                 $data->forceDelete();
+                
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['status' => 'success', 'deleted_size' => (int) $deletedSize]);
+                }
+                return back()->with('success', 'File berhasil dihapus');
             }
+        }
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['status' => 'error'], 400);
         }
     }
     public function stream_by_id(string $slug)
