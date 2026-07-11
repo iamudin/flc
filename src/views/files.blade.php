@@ -1,8 +1,3 @@
-<button class="btn btn-primary btn-sm mb-2" onclick="$('.upload').click()"> <i class="fa fa-upload"></i> Baru </button>
-<form action="{{ route('media.upload') }}" method="POST" class="mediaupload" enctype="multipart/form-data">
-@csrf
-<input accept="{{ allow_mime() }}" type="file" onchange="if(confirm('Upload Berkas ?')){$('.mediaupload').submit()}" name="media" class="upload d-none">
-</form>
 <div class="table-responsive">
 <table class="table-striped table table-bordered table-hover  bg-white">
     <thead>
@@ -24,8 +19,8 @@
 
                 <td width="70px">
                     <div class="btn-group">
-                    <button data-copy="{{ 'http://'.$item->host.'/media/'.$item->file_name }}" class="copy btn btn-sm btn-warning fa fa-link "></button>
-                    <span data-media="{{ 'http://'.$item->host.'/media/'.$item->file_name }}" data-ext="{{ str(media_extension($item->file_name))->lower() }}"  class="btn-view-media btn btn-sm btn-primary fa fa-eye"></span>
+                    <button data-copy="{{ 'http://'.$item->host.'/media/'.$item->file_name }}" class="copy btn btn-sm btn-warning"><i class=" fa fa-link "></i></button>
+                    <span data-media="{{ 'http://'.$item->host.'/media/'.$item->file_name }}" data-ext="{{ str(media_extension($item->file_name))->lower() }}"  class="btn-view-media btn btn-sm btn-primary "><i class="fa fa-eye"></i></span>
                     <button onclick="lw_media_destroy('{{ $item->file_name }}')" href="" class="btn btn-sm btn-danger fa fa-trash-o"></button>
                 </div>
                 </td>
