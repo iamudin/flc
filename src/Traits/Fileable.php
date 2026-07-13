@@ -135,7 +135,7 @@ trait Fileable
 
                 // Kompres gambar menggunakan Intervention Image
                 $image = Image::make($file);
-                $image->resize($width ?? 1200, $height, function ($constraint) {
+                $image->resize($width ?? 1700, $height, function ($constraint) {
                     $constraint->aspectRatio();
                     $constraint->upsize();
                 });
