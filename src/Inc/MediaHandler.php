@@ -21,7 +21,8 @@ class MediaHandler
 
     public static function getInstance($media, $host = null)
     {
-        if (empty($media)) return new self(null, $host);
+        if (empty($media))
+            return new self(null, $host);
         $instanceHost = $host ?? get_current_host();
         $key = $instanceHost . ":" . basename($media);
         if (!isset(self::$instances[$key])) {
@@ -37,7 +38,8 @@ class MediaHandler
 
     protected function loadData()
     {
-        if ($this->media === null) return null;
+        if ($this->media === null)
+            return null;
         if ($this->data === null) {
             $key = basename($this->media);
 
@@ -111,7 +113,8 @@ class MediaHandler
 
     public function size()
     {
-        if ($this->media === null) return '0 KB';
+        if ($this->media === null)
+            return '0 KB';
         $data = $this->loadData();
         if ($data && isset($data->file_size) && $data->file_size !== null) {
             if (is_numeric($data->file_size) && (int) $data->file_size > 0) {
@@ -159,7 +162,8 @@ class MediaHandler
 
     public function isExists()
     {
-        if ($this->media === null) return false;
+        if ($this->media === null)
+            return false;
         if ($this->exists === null) {
             $data = $this->loadData();
             $this->exists = (is_object($data) && !($data instanceof \__PHP_Incomplete_Class) && isset($data->file_path) && isset($data->file_disk));
@@ -184,14 +188,16 @@ class MediaHandler
 
     public function mime()
     {
-        if ($this->media === null) return 'application/octet-stream';
+        if ($this->media === null)
+            return 'application/octet-stream';
         $data = $this->loadData();
         return $data->file_type ?? getMimeTypeByExtension($this->media);
     }
 
     public function hits()
     {
-        if ($this->media === null) return 0;
+        if ($this->media === null)
+            return 0;
         $data = $this->loadData();
         return $data->file_hits ?? 0;
     }
