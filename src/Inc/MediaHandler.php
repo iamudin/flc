@@ -255,12 +255,31 @@ class MediaHandler
             $officeUrl = "https://view.officeapps.live.com/op/embed.aspx?src=" . urlencode(url($this->media));
 
             return "
-            <iframe
-                src='{$officeUrl}'
-                width='100%'
-                height='{$height}'
-                style='border:none;'>
-            </iframe>
+            <div id='{$id}_wrapper' style='width:100%;'>
+                <div id='{$id}_loading' style='text-align:center; padding:20px;'>
+                    Memuat preview...
+                </div>
+                <iframe
+                    id='{$id}_iframe'
+                    src=''
+                    width='100%'
+                    height='{$height}'
+                    style='border:none; display:none;'>
+                </iframe>
+            </div>
+            <script>
+            window.addEventListener('load', function(){
+                const iframe = document.getElementById('{$id}_iframe');
+                const loading = document.getElementById('{$id}_loading');
+                
+                iframe.src = '{$officeUrl}';
+                
+                iframe.onload = function() {
+                    loading.style.display = 'none';
+                    iframe.style.display = 'block';
+                };
+            });
+            </script>
             ";
         }
 
@@ -289,7 +308,7 @@ class MediaHandler
             </div>
 
             <script>
-            (function(){
+            window.addEventListener('load', function(){
                 const iframe = document.getElementById('{$id}_iframe');
                 const loading = document.getElementById('{$id}_loading');
 
@@ -320,7 +339,7 @@ class MediaHandler
                     }
                 }, " . (!is_local() ? "6000" : "0") . ");
 
-            })();
+            });
             </script>
             ";
         }
