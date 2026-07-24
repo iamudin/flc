@@ -4,8 +4,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Laravel\Facades\Image;
 use Illuminate\Support\Facades\Auth;
 use Leazycms\FLC\Models\File;
 
@@ -135,8 +134,7 @@ trait Fileable
             if (str_starts_with($file->getMimeType(), 'image/') && strpos($file->getMimeType(), 'gif') === false && strpos($file->getMimeType(), 'icon') === false) {
 
                 // Kompres gambar menggunakan Intervention Image
-                $manager = new ImageManager(new Driver());
-                $image = $manager->decode($file);
+                $image = Image::decode($file);
                 $image->scaleDown(width: $width ?? 1700, height: $height);
                 // Ubah extension dan MIME type menjadi WebP jika bukan WebP
                 $fileNameWithoutExt = pathinfo($fileName, PATHINFO_FILENAME);

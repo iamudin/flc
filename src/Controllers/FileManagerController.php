@@ -8,8 +8,7 @@ use Leazycms\FLC\Models\File;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Laravel\Facades\Image;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controllers\Middleware;
@@ -429,8 +428,7 @@ XML;
                 abort_if(!is_string($decrypted) || $decrypted === '', 500, 'File tidak dapat didecrypt');
                 $fileContent = $decrypted;
             }
-            $manager = new ImageManager(new Driver());
-            $img = $manager->decode($fileContent);
+            $img = Image::decode($fileContent);
             $img->scaleDown(width: 300);
 
             // Encode file ke format aslinya
