@@ -4,7 +4,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Support\Facades\Auth;
 use Leazycms\FLC\Models\File;
 
@@ -134,17 +135,15 @@ trait Fileable
             if (str_starts_with($file->getMimeType(), 'image/') && strpos($file->getMimeType(), 'gif') === false && strpos($file->getMimeType(), 'icon') === false) {
 
                 // Kompres gambar menggunakan Intervention Image
-                $image = Image::make($file);
-                $image->resize($width ?? 1700, $height, function ($constraint) {
-                    $constraint->aspectRatio();
-                    $constraint->upsize();
-                });
+                $manager = new ImageManager(new Driver());
+                $image = $manager->decode($file);
+                $image->scaleDown(width: $width ?? 1700, height: $height);
                 // Ubah extension dan MIME type menjadi WebP jika bukan WebP
                 $fileNameWithoutExt = pathinfo($fileName, PATHINFO_FILENAME);
                 $finalFileName = $fileNameWithoutExt . '.webp';
                 $path = $directory . '/' . $finalFileName;
                 // Simpan gambar dalam format WebP
-                $imageData = (string) $image->encode('webp', 95); // kualitas 80
+                $imageData = $image->encodeUsingFileExtension('webp', quality: 95)->toString(); // kualitas 80
                 if ($shouldEncrypt) {
                     $imageData = encryptData($fileKey, $imageData);
                 }

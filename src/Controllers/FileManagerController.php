@@ -8,7 +8,8 @@ use Leazycms\FLC\Models\File;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
-use Intervention\Image\Facades\Image;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controllers\Middleware;
@@ -428,15 +429,14 @@ XML;
                 abort_if(!is_string($decrypted) || $decrypted === '', 500, 'File tidak dapat didecrypt');
                 $fileContent = $decrypted;
             }
-            $img = Image::make($fileContent)->resize(300, null, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            });
+            $manager = new ImageManager(new Driver());
+            $img = $manager->decode($fileContent);
+            $img->scaleDown(width: 300);
 
             // Encode file ke format aslinya
-            $img->encode(pathinfo($media->file_path, PATHINFO_EXTENSION), 90); // 90 = kualitas gambar
+            $encoded = $img->encodeUsingFileExtension(pathinfo($media->file_path, PATHINFO_EXTENSION), quality: 90);
 
-            return response($img, 200, [
+            return response($encoded->toString(), 200, [
                 'Content-Type' => $media->file_type,
                 'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
                 'Cache-Control' => 'public, max-age=31536000, immutable',
