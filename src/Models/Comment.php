@@ -4,10 +4,11 @@ use Leazycms\Web\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Leazycms\FLC\Traits\Fileable;
 
 class Comment extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, Fileable;
     protected $fillable = [
         'user_id',
         'parent_id',

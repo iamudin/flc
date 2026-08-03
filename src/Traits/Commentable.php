@@ -26,8 +26,9 @@ trait Commentable
             $data['commentable_id'] = 3;
             $id = $this->insertGetId($data);
             $this->whereId($id)->update(['commentable_id'=>$id,'created_at'=>now()]);
+            return $this->find($id);
         }else{
-            $this->comments()->create($data);
+            return $this->comments()->create($data);
         }
     }
 

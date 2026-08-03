@@ -174,7 +174,7 @@
                 pointer-events: none;
             }
     </style>
-    <div class="form-head-title" style="font-size:15px;margin:0;padding:0 0 15px 0;font-weight:bold;">&#x1F5E3; {{ $title }} Publik ({{ $comments->count() }}) </div>
+    <div class="form-head-title" style="font-size:15px;margin:0;padding:0 0 15px 0;font-weight:bold;">&#x1F5E3; Jumlah {{ $title }}  ({{ $comments->count() }}) </div>
     <div id="comment-list">
         <ul class="custom-comment-list">
             @foreach($comments->whereNull('parent_id') as $comment)
@@ -213,7 +213,7 @@
             <div class="form-head-title" style="font-size:15p !important;padding:15px 0 !important;font-weight:bold;border-top:2px dashed #bbb !important">&#x1F4DD; Tulis {{ $title }} </div>
             <div id="response-message" style="display: none;padding:20px;text-align:center;margin-bottom:20px"></div>
             <div class="box-comment">
-            <form id="comment-form" method="post">
+            <form id="comment-form" method="post" enctype="multipart/form-data">
                 @csrf
                 <input type="text" name="name" placeholder="Nama Pengirim (wajib isi)" required >
                 @if(isset($attribute['email']) && $attribute['email'] !== false)
@@ -223,8 +223,17 @@
                 <input type="url" name="link" placeholder="Link profile ex: http://instagram.com/username (opsional)">
                 @endif
                 @if(isset($attribute['comment_meta']) && is_array($attribute['comment_meta']))
-                @foreach($attribute['comment_meta'] as $meta)
-                <input type="text" name="comment_meta[{{$meta}}]" placeholder="{{str($meta)->headline()}}">
+                @foreach($attribute['comment_meta'] as $key => $meta)
+                    @if(is_array($meta) && isset($meta['type']) && $meta['type'] == 'file')
+                        <div style="margin-bottom: 10px;text-align:left;">
+                            <label style="font-size:12px;margin-bottom:5px;display:block;color:#555;">{{str($key)->headline()}}</label>
+                            <input type="file" name="comment_meta[{{$key}}]" accept="{{ $meta['accept'] ?? '*/*' }}" style="padding:10px 0;">
+                        </div>
+                    @elseif(is_string($key))
+                        <input type="text" name="comment_meta[{{$key}}]" placeholder="{{str($key)->headline()}}">
+                    @else
+                        <input type="text" name="comment_meta[{{$meta}}]" placeholder="{{str($meta)->headline()}}">
+                    @endif
                 @endforeach
                 @endif
                 @if(isset($attribute['comment_content']) && $attribute['comment_content'] !== false)
@@ -246,7 +255,7 @@
                 document.addEventListener('DOMContentLoaded', function () {
                   $('#comment-form').on('submit', function (e) {
                       e.preventDefault();
-                      var formData = $(this).serialize();
+                      var formData = new FormData(this);
                       var $button = $('#submit-button');
                     $button.addClass('loading');
                     $('#loading-spinner').show();
@@ -254,6 +263,8 @@
                           url: '{{request()->fullUrl()}}',
                           method: 'POST',
                           data: formData,
+                          processData: false,
+                          contentType: false,
                           success: function (response) {
                             if(response.error=='Captcha'){
                                 $('#response-message')
