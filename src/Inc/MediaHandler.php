@@ -207,11 +207,11 @@ class MediaHandler
             $data = $this->loadData();
             $url = "/media/" . basename($this->media);
             if ($data->file_host && $data->file_host != request()->getHost()) {
-                $url = "http://" . $data->file_host . $url;
+                $url = "https://" . $data->file_host . $url;
             }
             return $url;
         }
-        return noimage();
+        return null;
     }
 
     public function url()
