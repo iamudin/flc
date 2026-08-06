@@ -240,10 +240,7 @@
 
                     <textarea maxlength="500" name="comment_content" rows="4" placeholder="Tulis {{ $title }}  disini maksimal 500 Karakter (wajib isi)" required></textarea>
                 @endif
-                <div class="captch" style="padding:2px;width:210px;height: 39px;">
-                <img src="{{ route('captcha',md5(request()->session()->getId())) }}" width="100" alt="" style="float:left">
-                <input required placeholder="Ketik..." type="text" name="captcha" style="height:33px;width:100px;border:none;border-radius:0;background:#eeeeee !important;font-size:small !important">
-                </div>
+               {!! captcha_field() !!}
                 <div style="text-align: right">
                     <button type="submit" id="submit-button">
                         <span id="button-text">Kirim</span>
