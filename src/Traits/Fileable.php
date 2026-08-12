@@ -44,6 +44,13 @@ trait Fileable
             // MIME type tidak diizinkan, jangan lakukan apa-apa dan kembalikan null
             return null;
         }
+
+        // Deduplication check: check if an identical image already exists in system storage
+        $existingDuplicateUrl = $this->findExistingDuplicate($file, $width);
+        if ($existingDuplicateUrl) {
+            return $existingDuplicateUrl;
+        }
+
         try {
             \Illuminate\Support\Facades\DB::beginTransaction();
             $this->removeFileByPurposeAndChild($purpose, $childId, $self_upload);
@@ -200,5 +207,94 @@ trait Fileable
             $existingFile->deleteFile(); // Menghapus file dari storage dan record dari database
 
         }
+    }
+
+    private function findExistingDuplicate($file, $width = null)
+    {
+        if (!$file || !is_file($file->getRealPath())) {
+            return null;
+        }
+
+        try {
+            $mime = $file->getMimeType();
+            if (!str_starts_with($mime, 'image/')) {
+                return null;
+            }
+
+            // Pre-process incoming image matching Fileable trait scaleDown rule
+            $img = Image::decode($file);
+            $targetWidth = $width ?? 1700;
+            if ($img->width() > $targetWidth) {
+                $img->scaleDown(width: $targetWidth);
+            }
+            $upWebpBytes = $img->encodeUsingFileExtension('webp', quality: 95)->toString();
+            $upGd = @imagecreatefromstring($upWebpBytes);
+
+            if (!$upGd) return null;
+
+            $upW = imagesx($upGd);
+            $upH = imagesy($upGd);
+
+            $disk = config('filesystems.default');
+            $existingQuery = File::latest();
+
+            if (config('modules.multisite_enabled') || app()->has('tenant')) {
+                $currentHost = request()->getHost();
+                $existingQuery->where('host', $currentHost);
+            }
+
+            $existingFiles = $existingQuery->take(200)->get();
+
+            foreach ($existingFiles as $existing) {
+                $exDisk = $existing->disk ?: $disk;
+                if (Storage::disk($exDisk)->exists($existing->file_path)) {
+                    $storedBytes = Storage::disk($exDisk)->get($existing->file_path);
+                    $stGd = @imagecreatefromstring($storedBytes);
+                    if ($stGd) {
+                        $stW = imagesx($stGd);
+                        $stH = imagesy($stGd);
+                        if ($stW === $upW && $stH === $upH) {
+                            $stepX = max(1, (int) floor($upW / 10));
+                            $stepY = max(1, (int) floor($upH / 10));
+                            $totalDiff = 0;
+                            $count = 0;
+
+                            for ($x = 0; $x < $upW; $x += $stepX) {
+                                for ($y = 0; $y < $upH; $y += $stepY) {
+                                    $c1 = imagecolorat($upGd, $x, $y);
+                                    $c2 = imagecolorat($stGd, $x, $y);
+
+                                    $r1 = ($c1 >> 16) & 0xFF;
+                                    $g1 = ($c1 >> 8) & 0xFF;
+                                    $b1 = $c1 & 0xFF;
+
+                                    $r2 = ($c2 >> 16) & 0xFF;
+                                    $g2 = ($c2 >> 8) & 0xFF;
+                                    $b2 = $c2 & 0xFF;
+
+                                    $totalDiff += abs($r1 - $r2) + abs($g1 - $g2) + abs($b1 - $b2);
+                                    $count++;
+                                }
+                            }
+
+                            imagedestroy($stGd);
+                            $avgDiff = $count > 0 ? ($totalDiff / $count) : 999;
+
+                            if ($avgDiff < 8) {
+                                imagedestroy($upGd);
+                                return '/media/' . $existing->file_name;
+                            }
+                        } else {
+                            imagedestroy($stGd);
+                        }
+                    }
+                }
+            }
+            imagedestroy($upGd);
+        } catch (\Throwable $e) {
+            // fail silently
+        }
+
+        return null;
     }
 }
