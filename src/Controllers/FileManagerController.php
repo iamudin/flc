@@ -131,26 +131,28 @@ HTML;
 
         if ($file = $request->file('media')) {
             $fileHash = md5_file($file->getRealPath());
-
-            // Cek duplikasi menggunakan child_id sebagai penyimpan hash md5
+            $originalName = $file->getClientOriginalName();
             $currentHost = app()->has('tenant') && function_exists('tenant') && tenant() ? tenant()->domain : $request->getHost();
 
+            // 1. Cek duplikasi berdasarkan hash MD5 (child_id) di host saat ini
             $existingFile = \Leazycms\FLC\Models\File::where('child_id', $fileHash)
-                ->where('purpose', 'upload-media')
-                ->where('host', $currentHost)
+                ->where(function($q) use ($currentHost) {
+                    $q->where('host', $currentHost)->orWhereNull('host');
+                })
                 ->first();
 
             if ($existingFile) {
+                $duplicateMsg = 'Duplikasi terdeteksi: File "' . $originalName . '" sudah pernah diunggah sebelumnya (sebagai /media/' . $existingFile->file_name . ').';
                 if ($request->expectsJson() || $request->ajax()) {
                     return response()->json([
                         'status' => 'error',
-                        'message' => 'Duplikasi terdeteksi: File ini sudah pernah diunggah.'
+                        'message' => $duplicateMsg
                     ], 400);
                 }
-                return back()->with('error', 'Duplikasi terdeteksi: File ini sudah pernah diunggah.');
+                return back()->with('error', $duplicateMsg);
             }
 
-            $fileName = (new File)->addFile([
+            $addFileResult = (new File)->addFile([
                 'file' => $file,
                 'purpose' => 'Upload Media',
                 'child_id' => $fileHash,
@@ -158,12 +160,26 @@ HTML;
                 'self_upload' => true
             ]);
 
-            if ($fileName !== null) {
+            if ($addFileResult !== null) {
+                $rawFileName = str_replace('/media/', '', $addFileResult);
+                $finalFile = File::where('file_name', $rawFileName)->first();
+
+                // 2. Cek jika addFile mengembalikan file lama yang sudah ada di storage (duplikasi pixel gambar)
+                if ($finalFile && $finalFile->child_id !== $fileHash) {
+                    $duplicateMsg = 'Duplikasi terdeteksi: Gambar ini identik dengan file /media/' . $finalFile->file_name . ' yang sudah ada di library.';
+                    if ($request->expectsJson() || $request->ajax()) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => $duplicateMsg
+                        ], 400);
+                    }
+                    return back()->with('error', $duplicateMsg);
+                }
+
                 if ($request->ajax() || $request->wantsJson()) {
-                    $finalFile = File::where('file_name', $fileName)->first();
                     return response()->json([
                         'status' => 'success',
-                        'file_name' => $fileName,
+                        'file_name' => '/media/' . $rawFileName,
                         'file_size' => $finalFile ? (int) $finalFile->file_size : 0,
                         'message' => 'File berhasil diupload'
                     ]);
