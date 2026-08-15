@@ -132,12 +132,30 @@ HTML;
         if ($file = $request->file('media')) {
             $fileHash = md5_file($file->getRealPath());
             $originalName = $file->getClientOriginalName();
-            $currentHost = app()->has('tenant') && function_exists('tenant') && tenant() ? tenant()->domain : $request->getHost();
+            $tenantHosts = [$request->getHost()];
+            if (app()->has('tenant') && function_exists('tenant') && tenant()) {
+                $tenant = tenant();
+                $parkedDomain = null;
+                if (class_exists(\Leazycms\Web\Models\Option::class)) {
+                    $parkedDomain = Cache::rememberForever("tenant:{$tenant->id}:parked_domain", function () use ($tenant) {
+                        return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                            ->where('tenant_id', $tenant->id)
+                            ->where('name', 'parked_domain')
+                            ->value('value');
+                    });
+                }
+                $tenantHosts = array_values(array_filter([
+                    $tenant->domain,
+                    $parkedDomain,
+                    $tenant->getAttribute('matched_parked_domain'),
+                    $request->getHost()
+                ]));
+            }
 
             // 1. Cek duplikasi berdasarkan hash MD5 (child_id) di host saat ini
             $existingFile = \Leazycms\FLC\Models\File::where('child_id', $fileHash)
-                ->where(function($q) use ($currentHost) {
-                    $q->where('host', $currentHost)->orWhereNull('host');
+                ->where(function($q) use ($tenantHosts) {
+                    $q->whereIn('host', $tenantHosts)->orWhereNull('host');
                 })
                 ->first();
 
@@ -224,7 +242,7 @@ XML;
             Cache::forget(request()->getHost() . ":media:{$slug}");
             $media = (new \Leazycms\FLC\Inc\MediaHandler($slug))->getData();
 
-            if (!$media || (isset($media->file_host) && request()->getHost() != $media->file_host)) {
+            if (!$media || (isset($media->file_host) && !is_authorized_media_host($media->file_host, request()->getHost()))) {
                 return $this->xmlNotFoundResponse(base64_encode(base64_encode($slug)) . '-' . md5(request()->session()->getId()));
             }
 
@@ -312,7 +330,7 @@ XML;
         $slug = dec64(dec64($slug));
         $media = media($slug)->getData();
 
-        if (!$media || (isset($media->file_host) && request()->getHost() != $media->file_host)) {
+        if (!$media || (isset($media->file_host) && !is_authorized_media_host($media->file_host, request()->getHost()))) {
             return $this->xmlNotFoundResponse(base64_encode(base64_encode(md5(request()->session()->getId()))));
         }
 
@@ -401,7 +419,7 @@ XML;
     {
         $media = media($slug)->getData();
 
-        if (!$media || (isset($media->file_host) && request()->getHost() != $media->file_host)) {
+        if (!$media || (isset($media->file_host) && !is_authorized_media_host($media->file_host, request()->getHost()))) {
             $requestId = Str::uuid();
             $hostId = base64_encode(Str::random(32));
             $xml = <<<XML

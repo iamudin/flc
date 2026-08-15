@@ -67,7 +67,7 @@ trait Fileable
                 'file_size' => Storage::disk($disk)->size($upload->path),
                 'purpose' => $purpose,
                 'disk' => $disk,
-                'host' => app()->has('tenant') && isset($this->tenant_id) !== tenant()->id ? $this->tenant->domain ?? request()->getHost() : request()->getHost(),
+                'host' => (app()->has('tenant') && function_exists('tenant') && tenant()) ? tenant()->domain : request()->getHost(),
                 'child_id' => $childId,
             ];
             if ($self_upload) {
@@ -239,8 +239,26 @@ trait Fileable
             $existingQuery = File::latest();
 
             if (config('modules.multisite_enabled') || app()->has('tenant')) {
-                $currentHost = request()->getHost();
-                $existingQuery->where('host', $currentHost);
+                $tenantHosts = [request()->getHost()];
+                if (app()->has('tenant') && function_exists('tenant') && tenant()) {
+                    $tenant = tenant();
+                    $parkedDomain = null;
+                    if (class_exists(\Leazycms\Web\Models\Option::class)) {
+                        $parkedDomain = Cache::rememberForever("tenant:{$tenant->id}:parked_domain", function () use ($tenant) {
+                            return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                                ->where('tenant_id', $tenant->id)
+                                ->where('name', 'parked_domain')
+                                ->value('value');
+                        });
+                    }
+                    $tenantHosts = array_values(array_filter([
+                        $tenant->domain,
+                        $parkedDomain,
+                        $tenant->getAttribute('matched_parked_domain'),
+                        request()->getHost()
+                    ]));
+                }
+                $existingQuery->whereIn('host', $tenantHosts);
             }
 
             $existingFiles = $existingQuery->take(200)->get();

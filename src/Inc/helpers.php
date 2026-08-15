@@ -4,6 +4,55 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+
+if (!function_exists('is_authorized_media_host')) {
+    function is_authorized_media_host(?string $fileHost, ?string $requestHost = null): bool
+    {
+        $requestHost = $requestHost ?? (function_exists('get_current_host') ? get_current_host() : request()->getHost());
+        if (empty($fileHost) || $requestHost === $fileHost) {
+            return true;
+        }
+
+        // Multi-tenant check: izinkan akses media jika host berasal dari tenant yang sama (domain asli, parked domain, atau custom domain)
+        if (app()->has('tenant') && function_exists('tenant') && tenant()) {
+            $tenant = tenant();
+            $parkedDomain = null;
+            if (class_exists(\Leazycms\Web\Models\Option::class)) {
+                $parkedDomain = Cache::rememberForever(
+                    "tenant:{$tenant->id}:parked_domain",
+                    function () use ($tenant) {
+                        return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                            ->where('tenant_id', $tenant->id)
+                            ->where('name', 'parked_domain')
+                            ->value('value');
+                    }
+                );
+            }
+
+            $allowedHosts = array_values(array_filter([
+                $tenant->domain,
+                $parkedDomain,
+                $tenant->getAttribute('matched_parked_domain'),
+                $tenant->getAttribute('domain')
+            ]));
+
+            if (in_array($fileHost, $allowedHosts) && in_array($requestHost, $allowedHosts)) {
+                return true;
+            }
+        }
+
+        // Master / Main domain check
+        if (function_exists('is_main_domain') && is_main_domain()) {
+            $masterHost = parse_url(config('app.url'), PHP_URL_HOST);
+            if ($fileHost === $masterHost || $fileHost === $requestHost) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
 if (!function_exists('getMimeTypeByExtension')) {
     function getMimeTypeByExtension(string $filename)
     {

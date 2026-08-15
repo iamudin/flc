@@ -69,16 +69,35 @@ class MediaHandler
 
             // Jika tidak ada di cache (bernilai null), baru cek database
             if ($this->data === null) {
-                $file = \Leazycms\FLC\Models\File::select('file_path', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host', 'disk', 'encrypt_key')
-                    ->whereFileName($key)
-                    ->where('host', $this->host)
-                    ->first();
+                $query = \Leazycms\FLC\Models\File::select('file_path', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host', 'disk', 'encrypt_key')
+                    ->whereFileName($key);
+
+                if (app()->has('tenant') && function_exists('tenant') && tenant()) {
+                    $tenant = tenant();
+                    $parkedDomain = null;
+                    if (class_exists(\Leazycms\Web\Models\Option::class)) {
+                        $parkedDomain = Cache::rememberForever("tenant:{$tenant->id}:parked_domain", function () use ($tenant) {
+                            return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
+                                ->where('tenant_id', $tenant->id)
+                                ->where('name', 'parked_domain')
+                                ->value('value');
+                        });
+                    }
+                    $allowedHosts = array_values(array_filter([
+                        $this->host,
+                        $tenant->domain,
+                        $parkedDomain,
+                        $tenant->getAttribute('matched_parked_domain'),
+                        $tenant->getAttribute('domain')
+                    ]));
+                    $file = (clone $query)->whereIn('host', $allowedHosts)->first();
+                } else {
+                    $file = (clone $query)->where('host', $this->host)->first();
+                }
 
                 // Fallback: Jika diakses dari custom domain plugin atau multisite disable, cari tanpa host
                 if (!$file) {
-                    $file = \Leazycms\FLC\Models\File::select('file_path', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host', 'disk', 'encrypt_key')
-                        ->whereFileName($key)
-                        ->first();
+                    $file = $query->first();
                 }
 
 
@@ -206,7 +225,7 @@ class MediaHandler
         if ($this->isExists()) {
             $data = $this->loadData();
             $url = "/media/" . basename($this->media);
-            if ($data->file_host && $data->file_host != request()->getHost()) {
+            if ($data && !empty($data->file_host) && !is_authorized_media_host($data->file_host, request()->getHost())) {
                 $url = "https://" . $data->file_host . $url;
             }
             return $url;
