@@ -76,28 +76,7 @@ HTML;
         if (config('modules.multisite_enabled') && file_exists(public_path('favicon.ico'))) {
             unlink(public_path('favicon.ico'));
         }
-        $masterKey = config('flc.encrypt_key');
-        $shouldDecrypt = is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key);
-        if ($shouldDecrypt) {
-            if (!Auth::check()) {
-                return $this->privacyResponse();
-            }
-            return response()->stream(function () use ($media) {
-                $raw = Storage::disk($media->file_disk)->get($media->file_path);
-                $masterKey = config('flc.encrypt_key');
-                $fileKey = decryptData($masterKey, $media->encrypt_key);
-                $decrypted = is_string($fileKey) && $fileKey !== '' ? decryptData($fileKey, $raw) : false;
-                abort_if(!is_string($decrypted) || $decrypted === '', 500, 'File tidak dapat didecrypt');
-                echo $decrypted;
-            }, 200, [
-                'Content-Type' => $media->file_type,
-                'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
-                'Cache-Control' => 'public, max-age=31536000, immutable',
-                'Pragma' => 'public',
-                'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
-                'Accept-Ranges' => 'bytes',
-            ]);
-        }
+
         return response()->stream(function () use ($media) {
             $stream = Storage::disk($media->file_disk)->readStream($media->file_path);
             abort_if($stream === false, 404);
