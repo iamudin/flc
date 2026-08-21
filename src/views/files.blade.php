@@ -19,8 +19,8 @@
 
                 <td width="70px">
                     <div class="btn-group">
-                    <button data-copy="{{ 'http://'.$item->host.'/media/'.$item->file_name }}" class="copy btn btn-sm btn-warning"><i class=" fa fa-link "></i></button>
-                    <span data-media="{{ 'http://'.$item->host.'/media/'.$item->file_name }}" data-ext="{{ str(media_extension($item->file_name))->lower() }}"  class="btn-view-media btn btn-sm btn-primary "><i class="fa fa-eye"></i></span>
+                    <button data-copy="{{ (request()->secure() ? 'https://' : 'http://') . $item->host . '/media/' . $item->file_name }}" class="copy btn btn-sm btn-warning"><i class=" fa fa-link "></i></button>
+                    <span data-media="{{ (request()->secure() ? 'https://' : 'http://') . $item->host . '/media/' . $item->file_name }}" data-ext="{{ str(media_extension($item->file_name))->lower() }}" class="btn-view-media btn btn-sm btn-primary "><i class="fa fa-eye"></i></span>
                     <button onclick="lw_media_destroy('{{ $item->file_name }}')" href="" class="btn btn-sm btn-danger fa fa-trash-o"></button>
                 </div>
                 </td>
