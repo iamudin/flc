@@ -142,7 +142,11 @@ trait Fileable
 
                 // Kompres gambar menggunakan Intervention Image
                 $image = Image::decode($file);
-                $image->scaleDown(width: $width ?? 1700, height: $height);
+                $maxImageWidth = (int) (function_exists('get_option') && get_option('max_image_width') ? get_option('max_image_width') : 1500);
+                if ($maxImageWidth <= 0) {
+                    $maxImageWidth = 1500;
+                }
+                $image->scaleDown(width: $width ?? $maxImageWidth, height: $height);
                 // Ubah extension dan MIME type menjadi WebP jika bukan WebP
                 $fileNameWithoutExt = pathinfo($fileName, PATHINFO_FILENAME);
                 $finalFileName = $fileNameWithoutExt . '.webp';
@@ -223,14 +227,19 @@ trait Fileable
 
             // Pre-process incoming image matching Fileable trait scaleDown rule
             $img = Image::decode($file);
-            $targetWidth = $width ?? 1700;
+            $maxImageWidth = (int) (function_exists('get_option') && get_option('max_image_width') ? get_option('max_image_width') : 1500);
+            if ($maxImageWidth <= 0) {
+                $maxImageWidth = 1500;
+            }
+            $targetWidth = $width ?? $maxImageWidth;
             if ($img->width() > $targetWidth) {
                 $img->scaleDown(width: $targetWidth);
             }
             $upWebpBytes = $img->encodeUsingFileExtension('webp', quality: 95)->toString();
             $upGd = @imagecreatefromstring($upWebpBytes);
 
-            if (!$upGd) return null;
+            if (!$upGd)
+                return null;
 
             $upW = imagesx($upGd);
             $upH = imagesy($upGd);
