@@ -225,7 +225,7 @@ class MediaHandler
         if ($this->isExists()) {
             $data = $this->loadData();
             $url = "/media/" . basename($this->media);
-            if ($data && !empty($data->file_host) && !is_authorized_media_host($data->file_host, request()->getHost())) {
+            if (is_object($data) && !empty($data->file_host) && !is_authorized_media_host($data->file_host, request()->getHost())) {
                 $url = "https://" . $data->file_host . $url;
             }
             return $url;
