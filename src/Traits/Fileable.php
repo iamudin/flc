@@ -257,8 +257,9 @@ trait Fileable
                             return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
                                 ->where('tenant_id', $tenant->id)
                                 ->where('name', 'parked_domain')
-                                ->value('value');
+                                ->value('value') ?: '';
                         });
+                        if ($parkedDomain === '') $parkedDomain = null;
                     }
                     $tenantHosts = array_values(array_filter([
                         $tenant->domain,

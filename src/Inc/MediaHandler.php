@@ -83,20 +83,20 @@ class MediaHandler
                                 ->value('value');
                         });
                     }
-                    $allowedHosts = array_values(array_filter([
+                    $allowedHosts = array_values(array_unique(array_filter([
                         $this->host,
                         $tenant->domain,
                         $parkedDomain,
                         $tenant->getAttribute('matched_parked_domain'),
                         $tenant->getAttribute('domain')
-                    ]));
+                    ])));
                     $file = (clone $query)->whereIn('host', $allowedHosts)->first();
                 } else {
                     $file = (clone $query)->where('host', $this->host)->first();
                 }
 
                 // Fallback: Jika diakses dari custom domain plugin atau multisite disable, cari tanpa host
-                if (!$file) {
+                if (!$file && !app()->has('tenant')) {
                     $file = $query->first();
                 }
 

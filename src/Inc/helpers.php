@@ -24,9 +24,10 @@ if (!function_exists('is_authorized_media_host')) {
                         return \Leazycms\Web\Models\Option::withoutGlobalScope('tenant')
                             ->where('tenant_id', $tenant->id)
                             ->where('name', 'parked_domain')
-                            ->value('value');
+                            ->value('value') ?: '';
                     }
                 );
+                if ($parkedDomain === '') $parkedDomain = null;
             }
 
             $allowedHosts = array_values(array_filter([
