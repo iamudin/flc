@@ -4,6 +4,7 @@ namespace Leazycms\FLC\Inc;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 
 class MediaHandler
 {
@@ -266,20 +267,21 @@ class MediaHandler
         $officeExt = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
         $pdfExt = ['pdf'];
 
+        $html = '';
+
         // === IMAGE ===
         if (in_array($ext, $imageExt)) {
-            return "
+            $html = "
             <div style='text-align:center;'>
                 <img src='{$fileUrl}' style='width:100%; height:auto;' />
             </div>
             ";
         }
-
         // === OFFICE FILE (Microsoft Viewer) ===
-        if (in_array($ext, $officeExt)) {
+        elseif (in_array($ext, $officeExt)) {
             $officeUrl = "https://view.officeapps.live.com/op/embed.aspx?src=" . urlencode(url($this->media));
 
-            return "
+            $html = "
             <div id='{$id}_wrapper' style='width:100%;'>
                 <div id='{$id}_loading' style='text-align:center; padding:20px;'>
                     Memuat preview...
@@ -307,15 +309,14 @@ class MediaHandler
             </script>
             ";
         }
-
         // === PDF / DEFAULT (Google Viewer + fallback) ===
-        if (in_array($ext, $pdfExt)) {
+        elseif (in_array($ext, $pdfExt)) {
             $pdfUrl = e($fileUrl);
             $pdfPreviewUrl = !is_local()
                 ? 'https://docs.google.com/gview?url=' . urlencode($fileUrl) . '&embedded=true'
                 : $fileUrl;
 
-            return "
+            $html = "
             <div id='{$id}_wrapper' style='width:100%;'>
 
                 <div id='{$id}_loading' style='text-align:center; padding:20px;'>
@@ -368,12 +369,15 @@ class MediaHandler
             </script>
             ";
         }
+        else {
+            // === DEFAULT (tidak bisa preview) ===
+            $html = "
+            <div style='text-align:center; padding:20px;'>
+                <p>Preview file tidak tersedia.</p>
+            </div>
+            ";
+        }
 
-        // === DEFAULT (tidak bisa preview) ===
-        return "
-        <div style='text-align:center; padding:20px;'>
-            <p>Preview file tidak tersedia.</p>
-        </div>
-        ";
+        return new HtmlString($html);
     }
 }
