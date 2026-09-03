@@ -313,7 +313,7 @@ class MediaHandler
         elseif (in_array($ext, $pdfExt)) {
             $pdfUrl = e($fileUrl);
             $pdfPreviewUrl = !is_local()
-                ? 'https://docs.google.com/gview?url=' . urlencode($fileUrl) . '&embedded=true'
+                ? 'https://docs.google.com/gview?url=' . urlencode(url($this->media)). '&embedded=true'
                 : $fileUrl;
 
             $html = "
