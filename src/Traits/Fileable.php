@@ -124,9 +124,11 @@ trait Fileable
             $sluggedName = (string) str()->uuid();
         } else {
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $sluggedName = str(substr($originalName, 0, 70))->slug();
+            $sluggedName = (string) str(substr($originalName, 0, 70))->slug();
             if (empty($sluggedName) || $sluggedName === 'image' || $sluggedName === 'blob') {
                 $sluggedName = 'image-' . Carbon::now()->format('YmdHis') . '-' . str(str()->random(4))->lower();
+            } elseif (mb_strlen(trim($originalName)) < 5 || mb_strlen($sluggedName) < 5) {
+                $sluggedName = $sluggedName . '-' . str(str()->random(5))->lower();
             }
         }
 
