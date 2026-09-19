@@ -111,23 +111,32 @@ trait Fileable
 
         $host = app()->has('tenant') && isset($this->tenant_id) !== tenant()->id ? $this->tenant->domain ?? request()->getHost() : request()->getHost();
         $directory = (config('flc.disk_directory') ? config('flc.disk_directory') . '/' : $host . '/') . Carbon::now()->format('Y/m/d');
+        $extension = str($file->getClientOriginalExtension())->lower();
+        if (!in_array($extension, flc_ext())) {
+            // MIME type tidak diizinkan, jangan lakukan apa-apa dan kembalikan null
+            return null;
+        }
+
+        $isWebpConvertible = str_starts_with($file->getMimeType(), 'image/') && strpos($file->getMimeType(), 'gif') === false && strpos($file->getMimeType(), 'icon') === false;
+        $targetExtension = $isWebpConvertible ? 'webp' : $extension;
+
         if ($randomName) {
             $sluggedName = (string) str()->uuid();
         } else {
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $sluggedName = str(substr($originalName, 0, 70))->slug();
+            if (empty($sluggedName) || $sluggedName === 'image' || $sluggedName === 'blob') {
+                $sluggedName = 'image-' . Carbon::now()->format('YmdHis') . '-' . str(str()->random(4))->lower();
+            }
         }
-        $extension = str($file->getClientOriginalExtension())->lower();
-        $fileName = $sluggedName . '.' . $extension;
-        if (File::whereFileName($fileName)->exists()) {
-            $fileName = $sluggedName . '-' . str(str()->random(4))->lower() . '.' . $extension;
-        }
-        if (!in_array($extension, flc_ext())) {
 
-            // MIME type tidak diizinkan, jangan lakukan apa-apa dan kembalikan null
-            return null;
-        }
         $disk = config('filesystems.default');
+        $fileName = $sluggedName . '.' . $targetExtension;
+        while (File::whereFileName($fileName)->exists() || Storage::disk($disk)->exists($directory . '/' . $fileName)) {
+            $fileName = $sluggedName . '-' . str(str()->random(4))->lower() . '.' . $targetExtension;
+        }
+        $finalFileName = $fileName;
+
         $masterKey = config('flc.encrypt_key');
         $shouldEncrypt = $shouldEncrypt && is_string($masterKey) && trim((string) $masterKey) !== '';
         $encryptedKeyForDb = null;
@@ -138,8 +147,7 @@ trait Fileable
         }
         // Cek apakah file adalah gambar
         try {
-            if (str_starts_with($file->getMimeType(), 'image/') && strpos($file->getMimeType(), 'gif') === false && strpos($file->getMimeType(), 'icon') === false) {
-
+            if ($isWebpConvertible) {
                 // Kompres gambar menggunakan Intervention Image
                 $image = Image::decode($file);
                 $maxImageWidth = (int) (function_exists('get_option') && get_option('max_image_width') ? get_option('max_image_width') : 1500);
@@ -147,9 +155,6 @@ trait Fileable
                     $maxImageWidth = 1500;
                 }
                 $image->scaleDown(width: $width ?? $maxImageWidth, height: $height);
-                // Ubah extension dan MIME type menjadi WebP jika bukan WebP
-                $fileNameWithoutExt = pathinfo($fileName, PATHINFO_FILENAME);
-                $finalFileName = $fileNameWithoutExt . '.webp';
                 $path = $directory . '/' . $finalFileName;
                 // Simpan gambar dalam format WebP
                 $imageData = $image->encodeUsingFileExtension('webp', quality: 95)->toString(); // kualitas 80
@@ -158,14 +163,13 @@ trait Fileable
                 }
                 Storage::disk($disk)->put($path, $imageData);
             } else {
-                $path = $directory . '/' . $fileName;
-                $finalFileName = $fileName;
+                $path = $directory . '/' . $finalFileName;
                 if ($shouldEncrypt) {
                     $contents = file_get_contents($file->getRealPath());
                     $contents = encryptData($fileKey, $contents);
                     Storage::disk($disk)->put($path, $contents);
                 } else {
-                    $path = $file->storeAs($directory, $fileName, $disk);
+                    $path = $file->storeAs($directory, $finalFileName, $disk);
                 }
             }
         } catch (\Exception $e) {
