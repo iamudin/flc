@@ -196,7 +196,6 @@ HTML;
     public function download($slug, $session)
     {
         if ($slug && $session) {
-            $slug = base64_decode(base64_decode($slug));
             if (!media_exists($slug) || $session != md5(request()->session()->getId())) {
                 $requestId = Str::uuid(); // unik, seperti AWS RequestId
                 $hostId = base64_encode(Str::random(32)); // mirip HostId AWS
@@ -306,7 +305,6 @@ XML;
         }
 
         // ambil file dari storage
-        $slug = dec64(dec64($slug));
         $media = media($slug)->getData();
 
         if (!$media || (isset($media->file_host) && !is_authorized_media_host($media->file_host, request()->getHost()))) {

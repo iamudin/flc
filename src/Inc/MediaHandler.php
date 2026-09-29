@@ -242,7 +242,7 @@ class MediaHandler
     public function stream()
     {
         if ($this->isExists()) {
-            return route('media.stream', enc64(enc64(basename($this->media))));
+            return route('media.stream', basename($this->media));
         }
         return false;
     }
@@ -250,7 +250,7 @@ class MediaHandler
     public function download()
     {
         if ($this->isExists()) {
-            return route('media.download', [enc64(basename($this->media)), md5(session()->getId()) . '?time=' . now()]);
+            return route('media.download', [basename($this->media), md5(session()->getId()) . '?time=' . now()]);
         }
         return false;
     }
