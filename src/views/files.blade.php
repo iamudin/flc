@@ -1,44 +1,52 @@
 <div class="table-responsive">
-<table class="table-striped table table-bordered table-hover  bg-white">
-    <thead>
-        <tr>
-            <th width="20px">No</th>
-            <th>Time</th>
-            <th>File Name</th>
-            <th>Size</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach ($data as $item)
+    <table class="table-striped table table-bordered table-hover  bg-white">
+        <thead>
             <tr>
-                <td align="center">{{ $loop->iteration + ($data->currentPage() - 1) * $data->perPage() }}</td>
-                <td>{{ $item->created_at->format('d-m-y H:i T') }}</td>
-                <td><b class="text-primary">{{ $item->file_name}}</b><br><small class="text-muted"><i class="fa fa-user"></i> {{ $item->user?->name }} <br><i class="fa fa-globe"></i> {{ $item->host }}</small></td>
-                <td>{{ media_size($item->file_name) }}</td>
-
-                <td width="70px">
-                    <div class="btn-group">
-                    <button data-copy="{{ (request()->secure() ? 'https://' : 'http://') . $item->host . '/media/' . $item->file_name }}" class="copy btn btn-sm btn-warning"><i class=" fa fa-link "></i></button>
-                    <span data-media="{{ (request()->secure() ? 'https://' : 'http://') . $item->host . '/media/' . $item->file_name }}" data-ext="{{ str(get_ext($item->file_name))->lower() }}" class="btn-view-media btn btn-sm btn-primary "><i class="fa fa-eye"></i></span>
-                    <button onclick="lw_media_destroy('{{ $item->file_name }}')" href="" class="btn btn-sm btn-danger fa fa-trash-o"></button>
-                </div>
-                </td>
+                <th width="20px">No</th>
+                <th>Time</th>
+                <th>File Name</th>
+                <th>Size</th>
+                <th>Action</th>
             </tr>
-        @endforeach
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach ($data as $item)
+                <tr>
+                    <td align="center">{{ $loop->iteration + ($data->currentPage() - 1) * $data->perPage() }}</td>
+                    <td>{{ $item->created_at->format('d-m-y H:i T') }}</td>
+                    <td><b class="text-primary">{{ $item->file_name}}</b><br><small class="text-muted"><i
+                                class="fa fa-user"></i> {{ $item->user?->name }} <br><i class="fa fa-globe"></i>
+                            {{ $item->host }}</small></td>
+                    <td>{{ media($item->file_name, $item->host)->size() }}</td>
+
+                    <td width="70px">
+                        <div class="btn-group">
+                            <button
+                                data-copy="{{ (request()->secure() ? 'https://' : 'http://') . $item->host . '/media/' . $item->file_name }}"
+                                class="copy btn btn-sm btn-warning"><i class=" fa fa-link "></i></button>
+                            <span
+                                data-media="{{ (request()->secure() ? 'https://' : 'http://') . $item->host . '/media/' . $item->file_name }}"
+                                data-ext="{{ str(get_ext($item->file_name))->lower() }}"
+                                class="btn-view-media btn btn-sm btn-primary "><i class="fa fa-eye"></i></span>
+                            <button onclick="lw_media_destroy('{{ $item->file_name }}')" href=""
+                                class="btn btn-sm btn-danger fa fa-trash-o"></button>
+                        </div>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
 </div>
 {{ $data->links('pagination::bootstrap-5') }}
 
 <script>
-    function lw_media_destroy(source){
-    if(confirm('Hapus ? ')){
-    $.post( "{{ route('media.destroy') }}", { _token:"{{ csrf_token() }}",media:source  })
-.done(function( data ) {
-    location.reload();
-});
-}
-}
+    function lw_media_destroy(source) {
+        if (confirm('Hapus ? ')) {
+            $.post("{{ route('media.destroy') }}", { _token: "{{ csrf_token() }}", media: source })
+                .done(function (data) {
+                    location.reload();
+                });
+        }
+    }
 </script>
