@@ -40,7 +40,7 @@ trait Fileable
             return null;
         }
         $ext = $file->getClientOriginalExtension();
-        if (!in_array($file->getMimeType(), $mime) && !in_array($ext, flc_ext())) {
+        if ($mime !== null && !in_array($file->getMimeType(), $mime) && !in_array($ext, flc_ext())) {
             // MIME type tidak diizinkan, jangan lakukan apa-apa dan kembalikan null
             return null;
         }
@@ -55,8 +55,11 @@ trait Fileable
             \Illuminate\Support\Facades\DB::beginTransaction();
             $this->removeFileByPurposeAndChild($purpose, $childId, $self_upload);
             $upload = $this->handleFileUpload($file, $width, $height, $is_encrypt, $random_name);
+            if (!$upload || empty($upload->path)) {
+                throw new \Exception("File gagal diproses atau disimpan ke storage.");
+            }
+            $disk = $upload->disk ?? config('filesystems.default');
             $mimeType = $file->getMimeType();
-            $disk = config('filesystems.default');
             $data = [
                 'user_id' => auth()?->id(),
                 'file_path' => $upload->path,
@@ -96,7 +99,8 @@ trait Fileable
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\DB::rollBack();
             if (isset($upload) && isset($upload->path)) {
-                Storage::disk(config('filesystems.default'))->delete($upload->path);
+                $deleteDisk = $upload->disk ?? config('filesystems.default');
+                Storage::disk($deleteDisk)->delete($upload->path);
             }
             Log::channel('daily')->error('File upload error: ' . $e->getMessage(), [
                 'info' => 'Error during file upload',
@@ -149,6 +153,7 @@ trait Fileable
         }
         // Cek apakah file adalah gambar
         try {
+            $saved = false;
             if ($isWebpConvertible) {
                 // Kompres gambar menggunakan Intervention Image
                 $image = Image::decode($file);
@@ -163,15 +168,65 @@ trait Fileable
                 if ($shouldEncrypt) {
                     $imageData = encryptData($fileKey, $imageData);
                 }
-                Storage::disk($disk)->put($path, $imageData);
+                try {
+                    $saved = Storage::disk($disk)->put($path, $imageData);
+                } catch (\Throwable $diskEx) {
+                    $saved = false;
+                    Log::channel('daily')->warning("Disk [{$disk}] gagal menyimpan file: " . $diskEx->getMessage());
+                }
+
+                if ($saved === false && $disk !== 'local') {
+                    Log::channel('daily')->warning("Disk [{$disk}] gagal, fallback otomatis ke disk [local]: {$path}");
+                    $disk = 'local';
+                    try {
+                        $saved = Storage::disk($disk)->put($path, $imageData);
+                    } catch (\Throwable $localEx) {
+                        $saved = false;
+                        Log::channel('daily')->error("Disk fallback [local] juga gagal: " . $localEx->getMessage());
+                    }
+                }
+
+                if ($saved === false) {
+                    throw new \Exception("Gagal menyimpan file ke disk [{$disk}] pada path [{$path}]");
+                }
             } else {
                 $path = $directory . '/' . $finalFileName;
                 if ($shouldEncrypt) {
                     $contents = file_get_contents($file->getRealPath());
                     $contents = encryptData($fileKey, $contents);
-                    Storage::disk($disk)->put($path, $contents);
+                    try {
+                        $saved = Storage::disk($disk)->put($path, $contents);
+                    } catch (\Throwable $diskEx) {
+                        $saved = false;
+                    }
+                    if ($saved === false && $disk !== 'local') {
+                        $disk = 'local';
+                        try {
+                            $saved = Storage::disk($disk)->put($path, $contents);
+                        } catch (\Throwable $localEx) {
+                            $saved = false;
+                        }
+                    }
                 } else {
-                    $path = $file->storeAs($directory, $finalFileName, $disk);
+                    try {
+                        $storeRes = $file->storeAs($directory, $finalFileName, $disk);
+                        $saved = ($storeRes !== false && $storeRes !== null);
+                    } catch (\Throwable $diskEx) {
+                        $saved = false;
+                    }
+                    if ($saved === false && $disk !== 'local') {
+                        $disk = 'local';
+                        try {
+                            $storeRes = $file->storeAs($directory, $finalFileName, $disk);
+                            $saved = ($storeRes !== false && $storeRes !== null);
+                        } catch (\Throwable $localEx) {
+                            $saved = false;
+                        }
+                    }
+                }
+
+                if ($saved === false) {
+                    throw new \Exception("Gagal menyimpan file ke disk [{$disk}] pada path [{$path}]");
                 }
             }
         } catch (\Exception $e) {
@@ -180,6 +235,7 @@ trait Fileable
                 'ip' => get_client_ip(),
                 'url' => request()->fullUrl(),
             ]);
+            return null;
         }
         Log::channel('daily')->warning('File uploaded: ' . url("media/{$finalFileName}"), [
             'path' => $path,
@@ -189,7 +245,7 @@ trait Fileable
             'referer' => request()->headers->get('referer'),
 
         ]);
-        return json_decode(json_encode(['path' => $path, 'name' => $finalFileName, 'encrypt_key' => $encryptedKeyForDb]));
+        return json_decode(json_encode(['path' => $path, 'name' => $finalFileName, 'encrypt_key' => $encryptedKeyForDb, 'disk' => $disk]));
     }
 
 
