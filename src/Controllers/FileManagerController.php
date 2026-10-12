@@ -89,6 +89,7 @@ HTML;
             'Pragma' => 'public',
             'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
             'Accept-Ranges' => 'bytes',
+            'Access-Control-Allow-Origin' => '*',
         ]);
     }
 
@@ -451,7 +452,8 @@ XML;
                 'Cache-Control' => 'public, max-age=31536000, immutable',
                 'Pragma' => 'public',
                 'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
-                'Accept-Ranges' => 'bytes'
+                'Accept-Ranges' => 'bytes',
+                'Access-Control-Allow-Origin' => '*',
             ]);
         }
         $masterKey = config('flc.encrypt_key');
@@ -474,6 +476,7 @@ XML;
                 'Pragma' => 'public',
                 'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
                 'Accept-Ranges' => 'bytes',
+                'Access-Control-Allow-Origin' => '*',
             ]);
         }
         return response()->stream(function () use ($media) {
@@ -488,6 +491,7 @@ XML;
             'Pragma' => 'public',
             'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
             'Accept-Ranges' => 'bytes',
+            'Access-Control-Allow-Origin' => '*',
         ]);
     }
 
