@@ -1,12 +1,11 @@
 <?php
 namespace Leazycms\FLC\Models;
+use Leazycms\Web\Models\BaseModel;
 use Leazycms\Web\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Leazycms\FLC\Traits\Fileable;
 
-class Comment extends Model
+class Comment extends BaseModel
 {
     use SoftDeletes, Fileable;
     protected $fillable = [
@@ -22,21 +21,23 @@ class Comment extends Model
         'ip',
         'status'
     ];
-    protected $casts=[
+    protected $casts = [
         'comment_meta' => 'array',
     ];
     public function commentable()
     {
         return $this->morphTo();
     }
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
     public function post()
     {
         return $this->belongsTo(query(), 'commentable_id');
     }
-    public function childs(){
+    public function childs()
+    {
         return $this->hasMany(Comment::class, 'parent_id', 'id');
     }
 
