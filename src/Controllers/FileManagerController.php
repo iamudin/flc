@@ -428,6 +428,34 @@ XML;
         $isImage = str_contains($media->file_type, 'image');
 
         if ($isImage && $size == 'small') {
+            $lastModified = null;
+            try {
+                if (Storage::disk($media->file_disk)->exists($media->file_path)) {
+                    $lastModified = Storage::disk($media->file_disk)->lastModified($media->file_path);
+                }
+            } catch (\Throwable $e) {
+            }
+
+            $etag = $lastModified ? '"' . md5($media->file_path . $lastModified . 'small') . '"' : null;
+
+            // Revalidasi jika browser melakukan conditional request
+            $ifNoneMatch = request()->headers->get('If-None-Match');
+            $ifModifiedSince = request()->headers->get('If-Modified-Since');
+
+            if ($etag && $ifNoneMatch && trim($ifNoneMatch) === $etag) {
+                return response('', 304, [
+                    'ETag' => $etag,
+                    'Cache-Control' => 'public, max-age=86400, must-revalidate',
+                ]);
+            }
+
+            if ($lastModified && $ifModifiedSince && @strtotime($ifModifiedSince) >= $lastModified) {
+                return response('', 304, [
+                    'Last-Modified' => gmdate('D, d M Y H:i:s', $lastModified) . ' GMT',
+                    'Cache-Control' => 'public, max-age=86400, must-revalidate',
+                ]);
+            }
+
             $fileContent = Storage::disk($media->file_disk)->get($media->file_path);
             $masterKey = config('flc.encrypt_key');
             $shouldDecrypt = is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key);
@@ -446,15 +474,23 @@ XML;
             // Encode file ke format aslinya
             $encoded = $img->encodeUsingFileExtension(pathinfo($media->file_path, PATHINFO_EXTENSION), quality: 90);
 
-            return response($encoded->toString(), 200, [
+            $headers = [
                 'Content-Type' => $media->file_type,
                 'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
-                'Cache-Control' => 'public, max-age=31536000, immutable',
+                'Cache-Control' => 'public, max-age=86400, must-revalidate',
                 'Pragma' => 'public',
-                'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
                 'Accept-Ranges' => 'bytes',
                 'Access-Control-Allow-Origin' => '*',
-            ]);
+            ];
+
+            if ($lastModified) {
+                $headers['Last-Modified'] = gmdate('D, d M Y H:i:s', $lastModified) . ' GMT';
+            }
+            if ($etag) {
+                $headers['ETag'] = $etag;
+            }
+
+            return response($encoded->toString(), 200, $headers);
         }
         $masterKey = config('flc.encrypt_key');
         $shouldDecrypt = is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key);
