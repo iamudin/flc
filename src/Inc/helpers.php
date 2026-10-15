@@ -408,9 +408,6 @@ if (!function_exists('decryptData')) {
         );
 
         $data = base64_decode($encryptedData);
-        if (!$data || strlen($data) <= 16) {
-            return false;
-        }
 
         $iv = substr($data, 0, 16);
 
