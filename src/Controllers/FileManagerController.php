@@ -227,15 +227,16 @@ XML;
 
             $key = md5($slug) . "_" . $slug;
             $masterKey = config('flc.encrypt_key');
-            $shouldDecrypt = is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key);
+            $fileKey = (is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key) && $media->encrypt_key !== 'local')
+                ? decryptData($masterKey, $media->encrypt_key)
+                : false;
+            $shouldDecrypt = is_string($fileKey) && $fileKey !== '';
             if ($shouldDecrypt) {
                 if (!Auth::check()) {
                     return $this->privacyResponse();
                 }
-                return response()->streamDownload(function () use ($media) {
+                return response()->streamDownload(function () use ($media, $fileKey) {
                     $raw = Storage::disk($media->file_disk)->get($media->file_path);
-                    $masterKey = config('flc.encrypt_key');
-                    $fileKey = decryptData($masterKey, $media->encrypt_key);
                     $decrypted = is_string($fileKey) && $fileKey !== '' ? decryptData($fileKey, $raw) : false;
                     abort_if(!is_string($decrypted) || $decrypted === '', 500, 'File tidak dapat didecrypt');
                     echo $decrypted;
@@ -313,15 +314,16 @@ XML;
         }
 
         $masterKey = config('flc.encrypt_key');
-        $shouldDecrypt = is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key);
+        $fileKey = (is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key) && $media->encrypt_key !== 'local')
+            ? decryptData($masterKey, $media->encrypt_key)
+            : false;
+        $shouldDecrypt = is_string($fileKey) && $fileKey !== '';
         if ($shouldDecrypt) {
             if (!Auth::check()) {
                 return $this->privacyResponse();
             }
-            return response()->stream(function () use ($media) {
+            return response()->stream(function () use ($media, $fileKey) {
                 $raw = Storage::disk($media->file_disk)->get($media->file_path);
-                $masterKey = config('flc.encrypt_key');
-                $fileKey = decryptData($masterKey, $media->encrypt_key);
                 $decrypted = is_string($fileKey) && $fileKey !== '' ? decryptData($fileKey, $raw) : false;
                 abort_if(!is_string($decrypted) || $decrypted === '', 500, 'File tidak dapat didecrypt');
                 echo $decrypted;
@@ -458,12 +460,14 @@ XML;
 
             $fileContent = Storage::disk($media->file_disk)->get($media->file_path);
             $masterKey = config('flc.encrypt_key');
-            $shouldDecrypt = is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key);
+            $fileKey = (is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key) && $media->encrypt_key !== 'local')
+                ? decryptData($masterKey, $media->encrypt_key)
+                : false;
+            $shouldDecrypt = is_string($fileKey) && $fileKey !== '';
             if ($shouldDecrypt) {
                 if (!Auth::check()) {
                     return $this->privacyResponse();
                 }
-                $fileKey = decryptData($masterKey, $media->encrypt_key);
                 $decrypted = is_string($fileKey) && $fileKey !== '' ? decryptData($fileKey, $fileContent) : false;
                 abort_if(!is_string($decrypted) || $decrypted === '', 500, 'File tidak dapat didecrypt');
                 $fileContent = $decrypted;
@@ -493,15 +497,16 @@ XML;
             return response($encoded->toString(), 200, $headers);
         }
         $masterKey = config('flc.encrypt_key');
-        $shouldDecrypt = is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key);
+        $fileKey = (is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key) && $media->encrypt_key !== 'local')
+            ? decryptData($masterKey, $media->encrypt_key)
+            : false;
+        $shouldDecrypt = is_string($fileKey) && $fileKey !== '';
         if ($shouldDecrypt) {
             if (!Auth::check()) {
                 return $this->privacyResponse();
             }
-            return response()->stream(function () use ($media) {
+            return response()->stream(function () use ($media, $fileKey) {
                 $raw = Storage::disk($media->file_disk)->get($media->file_path);
-                $masterKey = config('flc.encrypt_key');
-                $fileKey = decryptData($masterKey, $media->encrypt_key);
                 $decrypted = is_string($fileKey) && $fileKey !== '' ? decryptData($fileKey, $raw) : false;
                 abort_if(!is_string($decrypted) || $decrypted === '', 500, 'File tidak dapat didecrypt');
                 echo $decrypted;
