@@ -408,7 +408,7 @@ XML;
             ]);
         }
 
-        $media = media($slug)->getData();
+        $media = media($slug, request()->getHost())->getData();
 
         if (!$media || (isset($media->file_host) && !is_authorized_media_host($media->file_host, request()->getHost()))) {
             $requestId = Str::uuid();
