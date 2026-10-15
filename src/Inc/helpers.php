@@ -14,13 +14,8 @@ if (!function_exists('is_authorized_media_host')) {
         }
 
         // Multi-tenant check: izinkan akses media jika host berasal dari tenant yang sama (domain asli, parked domain, atau custom domain)
-        $tenant = (app()->has('tenant') && function_exists('tenant')) ? tenant() : null;
-        if (!$tenant && class_exists(\Leazycms\Web\Models\Tenant::class)) {
-            $tenant = \Leazycms\Web\Models\Tenant::resolveByHost($requestHost)
-                ?: \Leazycms\Web\Models\Tenant::resolveByHost($fileHost);
-        }
-
-        if ($tenant) {
+        if (app()->has('tenant') && function_exists('tenant') && tenant()) {
+            $tenant = tenant();
             $parkedDomain = null;
             if (class_exists(\Leazycms\Web\Models\Option::class)) {
                 $parkedDomain = Cache::rememberForever(
@@ -47,13 +42,12 @@ if (!function_exists('is_authorized_media_host')) {
             }
         }
 
-        // Master / Main domain check: File milik tenant tidak bisa diakses melalui main_domain, wajib dengan domain tenant
+        // Master / Main domain check
         if (function_exists('is_main_domain') && is_main_domain()) {
             $masterHost = parse_url(config('app.url'), PHP_URL_HOST);
             if ($fileHost === $masterHost || $fileHost === $requestHost) {
                 return true;
             }
-            return false;
         }
 
         return false;
@@ -414,9 +408,6 @@ if (!function_exists('decryptData')) {
         );
 
         $data = base64_decode($encryptedData);
-        if (!$data || strlen($data) <= 16) {
-            return false;
-        }
 
         $iv = substr($data, 0, 16);
 

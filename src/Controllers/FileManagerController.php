@@ -58,10 +58,7 @@ class FileManagerController extends Controller implements HasMiddleware
 </body>
 </html>
 HTML;
-        return response(minify_all_one_line($html), 403)
-            ->header('Content-Type', 'text/html; charset=UTF-8')
-            ->header('Access-Control-Allow-Origin', '*')
-            ->header('Cross-Origin-Resource-Policy', 'cross-origin');
+        return response(minify_all_one_line($html), 403)->header('Content-Type', 'text/html; charset=UTF-8');
     }
 
     public static function middleware(): array
@@ -398,17 +395,7 @@ XML;
     }
     public function stream_by_id(string $slug)
     {
-        if (request()->isMethod('OPTIONS')) {
-            return response('', 204, [
-                'Access-Control-Allow-Origin' => '*',
-                'Access-Control-Allow-Methods' => 'GET, POST, OPTIONS, HEAD',
-                'Access-Control-Allow-Headers' => '*',
-                'Access-Control-Max-Age' => '86400',
-                'Cross-Origin-Resource-Policy' => 'cross-origin',
-            ]);
-        }
-
-        $media = media($slug, request()->getHost())->getData();
+        $media = media($slug)->getData();
 
         if (!$media || (isset($media->file_host) && !is_authorized_media_host($media->file_host, request()->getHost()))) {
             $requestId = Str::uuid();
@@ -423,10 +410,7 @@ XML;
   <HostId>{$hostId}</HostId>
 </Error>
 XML;
-            return response($xml, 404)
-                ->header('Content-Type', 'application/xml')
-                ->header('Access-Control-Allow-Origin', '*')
-                ->header('Cross-Origin-Resource-Policy', 'cross-origin');
+            return response($xml, 404)->header('Content-Type', 'application/xml');
         }
 
         $auth = $media->file_auth ?? null;
@@ -444,38 +428,6 @@ XML;
         $isImage = str_contains($media->file_type, 'image');
 
         if ($isImage && $size == 'small') {
-            $lastModified = null;
-            try {
-                if (Storage::disk($media->file_disk)->exists($media->file_path)) {
-                    $lastModified = Storage::disk($media->file_disk)->lastModified($media->file_path);
-                }
-            } catch (\Throwable $e) {
-            }
-
-            $etag = $lastModified ? '"' . md5($media->file_path . $lastModified . 'small') . '"' : null;
-
-            // Revalidasi jika browser melakukan conditional request
-            $ifNoneMatch = request()->headers->get('If-None-Match');
-            $ifModifiedSince = request()->headers->get('If-Modified-Since');
-
-            if ($etag && $ifNoneMatch && trim($ifNoneMatch) === $etag) {
-                return response('', 304, [
-                    'ETag' => $etag,
-                    'Cache-Control' => 'public, max-age=86400, must-revalidate',
-                    'Access-Control-Allow-Origin' => '*',
-                    'Cross-Origin-Resource-Policy' => 'cross-origin',
-                ]);
-            }
-
-            if ($lastModified && $ifModifiedSince && @strtotime($ifModifiedSince) >= $lastModified) {
-                return response('', 304, [
-                    'Last-Modified' => gmdate('D, d M Y H:i:s', $lastModified) . ' GMT',
-                    'Cache-Control' => 'public, max-age=86400, must-revalidate',
-                    'Access-Control-Allow-Origin' => '*',
-                    'Cross-Origin-Resource-Policy' => 'cross-origin',
-                ]);
-            }
-
             $fileContent = Storage::disk($media->file_disk)->get($media->file_path);
             $masterKey = config('flc.encrypt_key');
             $shouldDecrypt = is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key);
@@ -494,24 +446,15 @@ XML;
             // Encode file ke format aslinya
             $encoded = $img->encodeUsingFileExtension(pathinfo($media->file_path, PATHINFO_EXTENSION), quality: 90);
 
-            $headers = [
+            return response($encoded->toString(), 200, [
                 'Content-Type' => $media->file_type,
                 'Content-Disposition' => 'inline; filename="' . basename($media->file_path) . '"',
-                'Cache-Control' => 'public, max-age=86400, must-revalidate',
+                'Cache-Control' => 'public, max-age=31536000, immutable',
                 'Pragma' => 'public',
+                'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
                 'Accept-Ranges' => 'bytes',
                 'Access-Control-Allow-Origin' => '*',
-                'Cross-Origin-Resource-Policy' => 'cross-origin',
-            ];
-
-            if ($lastModified) {
-                $headers['Last-Modified'] = gmdate('D, d M Y H:i:s', $lastModified) . ' GMT';
-            }
-            if ($etag) {
-                $headers['ETag'] = $etag;
-            }
-
-            return response($encoded->toString(), 200, $headers);
+            ]);
         }
         $masterKey = config('flc.encrypt_key');
         $shouldDecrypt = is_string($masterKey) && trim((string) $masterKey) !== '' && !empty($media->encrypt_key);
@@ -534,7 +477,6 @@ XML;
                 'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
                 'Accept-Ranges' => 'bytes',
                 'Access-Control-Allow-Origin' => '*',
-                'Cross-Origin-Resource-Policy' => 'cross-origin',
             ]);
         }
         return response()->stream(function () use ($media) {
@@ -550,7 +492,6 @@ XML;
             'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
             'Accept-Ranges' => 'bytes',
             'Access-Control-Allow-Origin' => '*',
-            'Cross-Origin-Resource-Policy' => 'cross-origin',
         ]);
     }
 
@@ -568,9 +509,6 @@ XML;
   <HostId>{$hostId}</HostId>
 </Error>
 XML;
-        return response($xml, 404)
-            ->header('Content-Type', 'application/xml')
-            ->header('Access-Control-Allow-Origin', '*')
-            ->header('Cross-Origin-Resource-Policy', 'cross-origin');
+        return response($xml, 404)->header('Content-Type', 'application/xml');
     }
 }

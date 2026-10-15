@@ -73,12 +73,8 @@ class MediaHandler
                 $query = \Leazycms\FLC\Models\File::select('file_path', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host', 'disk', 'encrypt_key')
                     ->whereFileName($key);
 
-                $tenant = (app()->has('tenant') && function_exists('tenant')) ? tenant() : null;
-                if (!$tenant && class_exists(\Leazycms\Web\Models\Tenant::class)) {
-                    $tenant = \Leazycms\Web\Models\Tenant::resolveByHost($this->host);
-                }
-
-                if ($tenant) {
+                if (app()->has('tenant') && function_exists('tenant') && tenant()) {
+                    $tenant = tenant();
                     $parkedDomain = null;
                     if (class_exists(\Leazycms\Web\Models\Option::class)) {
                         $parkedDomain = Cache::rememberForever("tenant:{$tenant->id}:parked_domain", function () use ($tenant) {
@@ -100,15 +96,9 @@ class MediaHandler
                     $file = (clone $query)->where('host', $this->host)->first();
                 }
 
-                // Fallback: Hanya jika multisite tidak aktif, cari file yang fisiknya ada di storage
-                if (!config('modules.multisite_enabled') && (!$file || !Storage::disk($file->disk)->exists($file->file_path))) {
-                    $candidates = (clone $query)->get();
-                    foreach ($candidates as $candidate) {
-                        if (Storage::disk($candidate->disk)->exists($candidate->file_path)) {
-                            $file = $candidate;
-                            break;
-                        }
-                    }
+                // Fallback: Jika diakses dari custom domain plugin atau multisite disable, cari tanpa host
+                if (!$file && !app()->has('tenant')) {
+                    $file = $query->first();
                 }
 
 
