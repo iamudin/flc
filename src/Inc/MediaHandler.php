@@ -158,7 +158,7 @@ class MediaHandler
                             \Leazycms\FLC\Models\File::whereFileName($key)
                                 ->where('file_path', $cacheData['file_path'] ?? null)
                                 ->where('disk', $cacheData['file_disk'] ?? null)
-                                ->where('host', $cacheData['file_host'] ?? $this->host)
+                                ->where('host', $this->host)
                                 ->update(['file_size' => $size]);
                         }
                         return size_as_kb($size);

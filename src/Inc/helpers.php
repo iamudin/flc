@@ -42,14 +42,12 @@ if (!function_exists('is_authorized_media_host')) {
             }
         }
 
-        // Master / Main domain check: Domain utama (master panel) memiliki otoritas penuh atas seluruh media milik tenant
-        $masterHost = parse_url(config('app.url'), PHP_URL_HOST);
-        if ($requestHost === $masterHost || $requestHost === 'localhost' || $requestHost === '127.0.0.1') {
-            return true;
-        }
-
+        // Master / Main domain check
         if (function_exists('is_main_domain') && is_main_domain()) {
-            return true;
+            $masterHost = parse_url(config('app.url'), PHP_URL_HOST);
+            if ($fileHost === $masterHost || $fileHost === $requestHost) {
+                return true;
+            }
         }
 
         return false;
