@@ -73,8 +73,12 @@ class MediaHandler
                 $query = \Leazycms\FLC\Models\File::select('file_path', 'file_type', 'file_size', 'file_hits', 'file_auth', 'host', 'disk', 'encrypt_key')
                     ->whereFileName($key);
 
-                if (app()->has('tenant') && function_exists('tenant') && tenant()) {
-                    $tenant = tenant();
+                $tenant = (app()->has('tenant') && function_exists('tenant')) ? tenant() : null;
+                if (!$tenant && class_exists(\Leazycms\Web\Models\Tenant::class)) {
+                    $tenant = \Leazycms\Web\Models\Tenant::resolveByHost($this->host);
+                }
+
+                if ($tenant) {
                     $parkedDomain = null;
                     if (class_exists(\Leazycms\Web\Models\Option::class)) {
                         $parkedDomain = Cache::rememberForever("tenant:{$tenant->id}:parked_domain", function () use ($tenant) {
