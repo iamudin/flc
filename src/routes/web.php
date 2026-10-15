@@ -6,5 +6,5 @@ Route::match(['post','get'],'media/destroy', [FileManagerController::class, 'des
 Route::match(['post','get'], 'media/upload', [FileManagerController::class, 'upload'])->name('media.upload');
 Route::get('media/download/{slug}/{session}', [FileManagerController::class, 'download'])->name('media.download');
 Route::get('media/stream/{slug}', [FileManagerController::class, 'stream'])->name('media.stream');
-Route::match(['post', 'get'], 'media/{slug}', [FileManagerController::class, 'stream_by_id'])
+Route::match(['post', 'get', 'options'], 'media/{slug}', [FileManagerController::class, 'stream_by_id'])
     ->where('slug', '(?!' . implode('|', ['destroy', 'upload']) . ')[a-zA-Z0-9-_]+(\.('.implode('|', flc_ext()).'))$')->name('stream');

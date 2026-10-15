@@ -58,7 +58,10 @@ class FileManagerController extends Controller implements HasMiddleware
 </body>
 </html>
 HTML;
-        return response(minify_all_one_line($html), 403)->header('Content-Type', 'text/html; charset=UTF-8');
+        return response(minify_all_one_line($html), 403)
+            ->header('Content-Type', 'text/html; charset=UTF-8')
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Cross-Origin-Resource-Policy', 'cross-origin');
     }
 
     public static function middleware(): array
@@ -395,6 +398,16 @@ XML;
     }
     public function stream_by_id(string $slug)
     {
+        if (request()->isMethod('OPTIONS')) {
+            return response('', 204, [
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, POST, OPTIONS, HEAD',
+                'Access-Control-Allow-Headers' => '*',
+                'Access-Control-Max-Age' => '86400',
+                'Cross-Origin-Resource-Policy' => 'cross-origin',
+            ]);
+        }
+
         $media = media($slug)->getData();
 
         if (!$media || (isset($media->file_host) && !is_authorized_media_host($media->file_host, request()->getHost()))) {
@@ -410,7 +423,10 @@ XML;
   <HostId>{$hostId}</HostId>
 </Error>
 XML;
-            return response($xml, 404)->header('Content-Type', 'application/xml');
+            return response($xml, 404)
+                ->header('Content-Type', 'application/xml')
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Cross-Origin-Resource-Policy', 'cross-origin');
         }
 
         $auth = $media->file_auth ?? null;
@@ -446,6 +462,8 @@ XML;
                 return response('', 304, [
                     'ETag' => $etag,
                     'Cache-Control' => 'public, max-age=86400, must-revalidate',
+                    'Access-Control-Allow-Origin' => '*',
+                    'Cross-Origin-Resource-Policy' => 'cross-origin',
                 ]);
             }
 
@@ -453,6 +471,8 @@ XML;
                 return response('', 304, [
                     'Last-Modified' => gmdate('D, d M Y H:i:s', $lastModified) . ' GMT',
                     'Cache-Control' => 'public, max-age=86400, must-revalidate',
+                    'Access-Control-Allow-Origin' => '*',
+                    'Cross-Origin-Resource-Policy' => 'cross-origin',
                 ]);
             }
 
@@ -481,6 +501,7 @@ XML;
                 'Pragma' => 'public',
                 'Accept-Ranges' => 'bytes',
                 'Access-Control-Allow-Origin' => '*',
+                'Cross-Origin-Resource-Policy' => 'cross-origin',
             ];
 
             if ($lastModified) {
@@ -513,6 +534,7 @@ XML;
                 'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
                 'Accept-Ranges' => 'bytes',
                 'Access-Control-Allow-Origin' => '*',
+                'Cross-Origin-Resource-Policy' => 'cross-origin',
             ]);
         }
         return response()->stream(function () use ($media) {
@@ -528,6 +550,7 @@ XML;
             'Expires' => gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT',
             'Accept-Ranges' => 'bytes',
             'Access-Control-Allow-Origin' => '*',
+            'Cross-Origin-Resource-Policy' => 'cross-origin',
         ]);
     }
 
@@ -545,6 +568,9 @@ XML;
   <HostId>{$hostId}</HostId>
 </Error>
 XML;
-        return response($xml, 404)->header('Content-Type', 'application/xml');
+        return response($xml, 404)
+            ->header('Content-Type', 'application/xml')
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Cross-Origin-Resource-Policy', 'cross-origin');
     }
 }

@@ -42,12 +42,13 @@ if (!function_exists('is_authorized_media_host')) {
             }
         }
 
-        // Master / Main domain check
+        // Master / Main domain check: File milik tenant tidak bisa diakses melalui main_domain, wajib dengan domain tenant
         if (function_exists('is_main_domain') && is_main_domain()) {
             $masterHost = parse_url(config('app.url'), PHP_URL_HOST);
             if ($fileHost === $masterHost || $fileHost === $requestHost) {
                 return true;
             }
+            return false;
         }
 
         return false;

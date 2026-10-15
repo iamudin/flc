@@ -96,9 +96,15 @@ class MediaHandler
                     $file = (clone $query)->where('host', $this->host)->first();
                 }
 
-                // Fallback: Jika diakses dari custom domain plugin atau multisite disable, cari tanpa host
-                if (!$file && !app()->has('tenant')) {
-                    $file = $query->first();
+                // Fallback: Hanya jika multisite tidak aktif, cari file yang fisiknya ada di storage
+                if (!config('modules.multisite_enabled') && (!$file || !Storage::disk($file->disk)->exists($file->file_path))) {
+                    $candidates = (clone $query)->get();
+                    foreach ($candidates as $candidate) {
+                        if (Storage::disk($candidate->disk)->exists($candidate->file_path)) {
+                            $file = $candidate;
+                            break;
+                        }
+                    }
                 }
 
 
