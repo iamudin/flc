@@ -14,8 +14,13 @@ if (!function_exists('is_authorized_media_host')) {
         }
 
         // Multi-tenant check: izinkan akses media jika host berasal dari tenant yang sama (domain asli, parked domain, atau custom domain)
-        if (app()->has('tenant') && function_exists('tenant') && tenant()) {
-            $tenant = tenant();
+        $tenant = (app()->has('tenant') && function_exists('tenant')) ? tenant() : null;
+        if (!$tenant && class_exists(\Leazycms\Web\Models\Tenant::class)) {
+            $tenant = \Leazycms\Web\Models\Tenant::resolveByHost($requestHost)
+                ?: \Leazycms\Web\Models\Tenant::resolveByHost($fileHost);
+        }
+
+        if ($tenant) {
             $parkedDomain = null;
             if (class_exists(\Leazycms\Web\Models\Option::class)) {
                 $parkedDomain = Cache::rememberForever(
