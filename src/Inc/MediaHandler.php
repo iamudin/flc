@@ -250,7 +250,7 @@ class MediaHandler
     public function download()
     {
         if ($this->isExists()) {
-            return route('media.download', [basename($this->media), md5(session()->getId()) . '?time=' . now()]);
+            return route('media.download', [basename($this->media), md5(session()->getId())]);
         }
         return false;
     }
