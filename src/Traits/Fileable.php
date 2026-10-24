@@ -36,6 +36,7 @@ trait Fileable
         $self_upload = isset($source['self_upload']) ? true : false;
         $is_encrypt = !empty($source['is_encrypt']);
         $random_name = !empty($source['random_name']);
+        $no_duplicate = !empty($source['no_duplicate']);
         if ($file === null && $purpose === null && $mime === null) {
             return null;
         }
@@ -45,10 +46,12 @@ trait Fileable
             return null;
         }
 
-        // Deduplication check: check if an identical image already exists in system storage
-        $existingDuplicateUrl = $this->findExistingDuplicate($file, $width);
-        if ($existingDuplicateUrl) {
-            return $existingDuplicateUrl;
+        if (!$no_duplicate) {
+            // Deduplication check: check if an identical image already exists in system storage
+            $existingDuplicateUrl = $this->findExistingDuplicate($file, $width);
+            if ($existingDuplicateUrl) {
+                return $existingDuplicateUrl;
+            }
         }
 
         try {
@@ -59,7 +62,7 @@ trait Fileable
                 throw new \Exception("File gagal diproses atau disimpan ke storage.");
             }
             $disk = $upload->disk ?? config('filesystems.default');
-            $mimeType = $file->getMimeType();
+            $mimeType = str_ends_with($upload->name, '.webp') ? 'image/webp' : $file->getMimeType();
             $data = [
                 'user_id' => auth()?->id(),
                 'file_path' => $upload->path,
@@ -309,8 +312,9 @@ trait Fileable
             $disk = config('filesystems.default');
             $existingQuery = File::latest();
 
+            $currentHost = request()->getHost();
             if (config('modules.multisite_enabled') || app()->has('tenant')) {
-                $tenantHosts = [request()->getHost()];
+                $tenantHosts = [$currentHost];
                 if (app()->has('tenant') && function_exists('tenant') && tenant()) {
                     $tenant = tenant();
                     $parkedDomain = null;
@@ -327,10 +331,12 @@ trait Fileable
                         $tenant->domain,
                         $parkedDomain,
                         $tenant->getAttribute('matched_parked_domain'),
-                        request()->getHost()
+                        $currentHost
                     ]));
                 }
                 $existingQuery->whereIn('host', $tenantHosts);
+            } else {
+                $existingQuery->where('host', $currentHost);
             }
 
             $existingFiles = $existingQuery->take(200)->get();
